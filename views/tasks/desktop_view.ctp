@@ -1,0 +1,1 @@
+<?php echo $data[0].'~'.$data[1].'~'.$time->relativeTime($data[2]); ?>
