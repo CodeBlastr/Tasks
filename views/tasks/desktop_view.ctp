@@ -1,1 +1,1 @@
-<?php echo $data[0].'~'.$data[1].'~'.$time->relativeTime($data[2]); ?>
+<?php echo $data[0].'~'.$data[1].'~'.$this->Time->relativeTime($data[2]); ?>

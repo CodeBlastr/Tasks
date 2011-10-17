@@ -1,9 +1,9 @@
 <div class="tasks index">
 <table cellpadding="0" cellspacing="0">
 	<tr>
-		<th><?php echo $paginator->sort('name');?></th>
-		<th><?php echo $paginator->sort('due_date');?></th>
-		<th><?php echo $paginator->sort('assignee_id');?></th>
+		<th><?php echo $this->Paginator->sort('name');?></th>
+		<th><?php echo $this->Paginator->sort('due_date');?></th>
+		<th><?php echo $this->Paginator->sort('assignee_id');?></th>
 		<th class="actions"><?php __('Actions');?></th>
 	</tr>
 <?php
