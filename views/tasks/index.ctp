@@ -26,7 +26,7 @@ foreach ($tasks as $task):
 		</td>
 		<td class="actions">
 			<?php echo $this->Html->link(__('Edit', true), array('action' => 'edit', $task['Task']['id'])); ?>
-            <?php if ($this->params['named']['completed'] != 1) { ?>
+            <?php if ($this->request->params['named']['completed'] != 1) { ?>
 			<?php echo $this->Html->link(__('Complete', true), array('action' => 'complete', $task['Task']['id']), null, sprintf(__('Are you sure you want to complete # %s?', true), $task['Task']['id'])); ?>
             <?php } ?>
 			<?php echo $this->Html->link(__('Delete', true), array('action' => 'delete', $task['Task']['id']), null, sprintf(__('Are you sure you want to delete # %s?', true), $task['Task']['id'])); ?>

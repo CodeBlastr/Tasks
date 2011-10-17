@@ -170,10 +170,10 @@ class TasksController extends TasksAppController {
 	 */
 	function my() {
 		# declare variable in case of non-use
-		if (!isset($this->params['named']['completed'])) { $this->params['named']['completed'] = ''; }
+		if (!isset($this->request->params['named']['completed'])) { $this->request->params['named']['completed'] = ''; }
 		
 		$conditions['Task.assignee_id'] = $this->Session->read('Auth.User.id');	
-		if (!empty($this->params['named']['completed']) && $this->params['named']['completed'] == 1){
+		if (!empty($this->request->params['named']['completed']) && $this->request->params['named']['completed'] == 1){
 			$conditions['Task.is_completed'] = 1;
 		} else {
 			$conditions['OR'] = array(
@@ -183,7 +183,7 @@ class TasksController extends TasksAppController {
 		}
 		$this->paginate = array('conditions' => $conditions, 'order' => array('Task.order' => 'asc'));
 		$this->set('tasks', $this->paginate('Task'));
-		$this->set('page_title_for_layout', 'My '.($this->params['named']['completed'] == 1 ? 'Completed' : 'Incomplete').' Tasks');
+		$this->set('page_title_for_layout', 'My '.($this->request->params['named']['completed'] == 1 ? 'Completed' : 'Incomplete').' Tasks');
 	}
 		
 		
@@ -468,7 +468,7 @@ class TasksController extends TasksAppController {
 	 * @todo 	 The task messaging is for the entire task list.  It is not per task, like it should be.  But there is some thought that needs to be put in about who gets notifications for tasks.  Assignee, Assigner, and what if you want someone else in on it.  So the todo, is put in that thought and make it happen. 
 	 */
 	function _callback_commentsafterAdd($options) {		
-		if ($this->params['action'] == 'view') :		
+		if ($this->request->params['action'] == 'view') :		
 			$this->Task->recursive = 0;
 			$task = $this->Task->find('first', array('conditions'=>array('Task.id'=>$options['modelId']), 'fields'=>array('Task.id', 'Task.due_date', 'Task.assignee_id', 'Task.name', 'Task.description', 'Creator.id', 'Creator.email', 'Creator.full_name')));
 			if(!empty($task))	{
