@@ -38,7 +38,7 @@ foreach ($tasks as $task):
 <?php echo $this->element('paging'); ?>
 <?php 
 // set the contextual menu items
-$menu->setValue(array(
+$this->Menu->setValue(array(
 	array(
 		'heading' => 'Tasks',
 		'items' => array(

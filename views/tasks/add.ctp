@@ -1,25 +1,25 @@
 <div class="tasks form">
-<?php echo $form->create('Task');?>
+<?php echo $this->Form->create('Task');?>
 	<fieldset>
  		<legend><?php __('Create Task');?></legend>
 	<?php
-		echo $form->input('Task.parent_id', array('empty' => true, 'label' => 'Which task list should this be on?'));
-		echo $form->input('Task.name');
-		echo $form->input('Task.description', array('type' => 'richtext'));
-		echo $form->input('Task.due_date');
-		echo $form->input('Task.order');
-		echo $form->input('Task.assignee_id');
-		echo $form->input('Task.model', array('type' => 'hidden'));
-		echo $form->input('Task.foreign_key', array('type' => 'hidden'));
+		echo $this->Form->input('Task.parent_id', array('empty' => true, 'label' => 'Which task list should this be on?'));
+		echo $this->Form->input('Task.name');
+		echo $this->Form->input('Task.description', array('type' => 'richtext'));
+		echo $this->Form->input('Task.due_date');
+		echo $this->Form->input('Task.order');
+		echo $this->Form->input('Task.assignee_id');
+		echo $this->Form->input('Task.model', array('type' => 'hidden'));
+		echo $this->Form->input('Task.foreign_key', array('type' => 'hidden'));
 	?>
 	</fieldset>
-<?php echo $form->end('Submit');?>
+<?php echo $this->Form->end('Submit');?>
 </div>
 
 
 <?php 
 // set the contextual menu items
-$menu->setValue(array(
+$this->Menu->setValue(array(
 	array(
 		'heading' => 'Tasks',
 		'items' => array(
