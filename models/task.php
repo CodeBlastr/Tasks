@@ -2,7 +2,7 @@
 class Task extends TasksAppModel {
 
 	var $name = 'Task';
-	var $actsAs = array('Tree', 'Archivable');
+	var $actsAs = array('Tree');
 	var $validate = array(
 		'name' => array('notempty'),
 	); 
