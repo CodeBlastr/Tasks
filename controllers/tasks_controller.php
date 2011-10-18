@@ -102,19 +102,19 @@ class TasksController extends TasksAppController {
 	 * @todo	We need to support multiple people being assigned.  That might be the with usable behavior, but need some more thought put into it. 
 	 */
 	function add($model = null, $foreignKey = null, $id = null) {
-		if (!empty($this->data)) {
+		if (!empty($this->request->data)) {
 			# find the users from the habtm users array
-			if (!empty($this->data['Task']['assignee_id'])) : 
+			if (!empty($this->request->data['Task']['assignee_id'])) : 
 				$recipients = $this->Task->Assignee->find('all', array(
 					'conditions' => array(
-						'Assignee.id' => $this->data['Task']['assignee_id'],
+						'Assignee.id' => $this->request->data['Task']['assignee_id'],
 						),
 					));
 			endif;
-			if ($this->Task->add($this->data)) {
+			if ($this->Task->add($this->request->data)) {
 				# send the message via email
 				if (!empty($recipients)) : foreach ($recipients as $recipient) :
-					$message = $this->data['Task']['name'];
+					$message = $this->request->data['Task']['name'];
 					$message .= '<p>You can view and comment on this this task here: <a href="'.$_SERVER['HTTP_REFERER'].'">'.$_SERVER['HTTP_REFERER'].'</a></p>';
 					$this->__sendMail($recipient['Assignee']['email'], 'Task Assigned', $message, $template = 'default');
 					$this->Session->setFlash(__('The Task has been saved', true));
@@ -127,16 +127,16 @@ class TasksController extends TasksAppController {
 			}
 		}
 		if (!empty($model) && !empty($foreignKey) && !empty($id)) :
-			$this->data['Task']['parent_id'] = $id;
-			$this->data['Task']['model'] = $model;
-			$this->data['Task']['foreign_key'] = $foreignKey;
+			$this->request->data['Task']['parent_id'] = $id;
+			$this->request->data['Task']['model'] = $model;
+			$this->request->data['Task']['foreign_key'] = $foreignKey;
 		elseif (!empty($model) && empty($foreignKey)) :
 			# if the model finds a task then this is a child we're creating
 			$task = $this->Task->read(null, $model);
-			$this->data['Task']['parent_id'] = !empty($task) ? $task['Task']['id'] : null;
+			$this->request->data['Task']['parent_id'] = !empty($task) ? $task['Task']['id'] : null;
 		else : 
-			$this->data['Task']['model'] = !empty($model) ? $model : null;
-			$this->data['Task']['foreign_key'] = !empty($foreignKey) ? $foreignKey : null;
+			$this->request->data['Task']['model'] = !empty($model) ? $model : null;
+			$this->request->data['Task']['foreign_key'] = !empty($foreignKey) ? $foreignKey : null;
 		endif;
 		$parents = $this->Task->ParentTask->find('list');
 		$assignees = $this->Task->Assignee->find('list');
@@ -145,16 +145,16 @@ class TasksController extends TasksAppController {
 
 
 	function edit($id = null) {
-		if (!empty($this->data)) {
-			if ($this->Task->add($this->data)) {
+		if (!empty($this->request->data)) {
+			if ($this->Task->add($this->request->data)) {
 				$this->Session->setFlash(__('The Task has been saved', true));
 				$this->redirect($this->referer(), 'success');
 			} else {
 				$this->Session->setFlash(__('The Task could not be saved. Please, try again.', true));
 			}
 		}
-		if (empty($this->data)) {
-			$this->data = $this->Task->read(null, $id);
+		if (empty($this->request->data)) {
+			$this->request->data = $this->Task->read(null, $id);
 		}
 		$parents = $this->Task->ParentTask->find('list');
 		$assignees = $this->Task->Assignee->find('list');
@@ -190,8 +190,8 @@ class TasksController extends TasksAppController {
 	function sort_order() {
 		$taskOrders = explode(',', $_POST['taskOrder']);
 		foreach ($taskOrders as $key => $value) {
-			$this->data['Task'] = array('id' => $value, 'order' => $key+1);
-			if($this->Task->add($this->data)) {
+			$this->request->data['Task'] = array('id' => $value, 'order' => $key+1);
+			if($this->Task->add($this->request->data)) {
 				$this->set(compact('taskOrders'));
 			} else {
 				$this->Session->setFlash('There was an error updating Task.');
