@@ -4,7 +4,7 @@
 		<th><?php echo $this->Paginator->sort('name');?></th>
 		<th><?php echo $this->Paginator->sort('due_date');?></th>
 		<th><?php echo $this->Paginator->sort('assignee_id');?></th>
-		<th class="actions"><?php __('Actions');?></th>
+		<th class="actions"><?php echo __('Actions');?></th>
 	</tr>
 <?php
 $i = 0;

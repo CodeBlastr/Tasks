@@ -1,7 +1,7 @@
 <div class="tasks form">
 <?php echo $this->Form->create('Task', array('action' => 'edit'));?>
 	<fieldset>
- 		<legend><?php __('Edit Task');?></legend>
+ 		<legend><?php echo __('Edit Task');?></legend>
 	<?php
 		echo $this->Form->input('Task.id');
 		echo $this->Form->input('Task.name');

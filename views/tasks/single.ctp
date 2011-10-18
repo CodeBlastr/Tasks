@@ -4,7 +4,7 @@
       <div class="viewRow">
         <ul class="metaData">
           <li><span class="metaDataLabel">
-            <?php __('Subject : '); ?>
+            <?php echo __('Subject : '); ?>
             </span><span class="metaDataDetail"><?php echo $task['Task']['name']; ?></span></li>
           <li><span class="metaDataLabel">
             <?php echo $model.' : '; ?>

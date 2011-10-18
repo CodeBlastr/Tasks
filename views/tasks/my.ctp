@@ -5,7 +5,7 @@
 		<th><?php echo $this->Paginator->sort('order');?></th>
 		<th><?php echo $this->Paginator->sort('name');?></th>
 		<th><?php echo $this->Paginator->sort('due_date');?></th>
-		<th class="actions"><?php __('Actions');?></th>
+		<th class="actions"><?php echo __('Actions');?></th>
 	</tr>
 </thead>
 <tbody>

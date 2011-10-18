@@ -1,7 +1,7 @@
 <div class="tasks form">
 <?php echo $this->Form->create('Task');?>
 	<fieldset>
- 		<legend><?php __('Create Task');?></legend>
+ 		<legend><?php echo __('Create Task');?></legend>
 	<?php
 		echo $this->Form->input('Task.parent_id', array('empty' => true, 'label' => 'Which task list should this be on?'));
 		echo $this->Form->input('Task.name');
