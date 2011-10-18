@@ -470,13 +470,13 @@ class TasksController extends TasksAppController {
 	function _callback_commentsafterAdd($options) {		
 		if ($this->request->params['action'] == 'view') :		
 			$this->Task->recursive = 0;
-			$task = $this->Task->find('first', array('conditions'=>array('Task.id'=>$options['modelId']), 'fields'=>array('Task.id', 'Task.due_date', 'Task.assignee_id', 'Task.name', 'Task.description', 'Creator.id', 'Creator.email', 'Creator.full_name')));
+			$task = $this->Task->find('first', array('conditions'=>array('Task.id'=>$options['modelId']), 'fields'=>array('Task.id', 'Task.due_date', 'Task.assignee_id', 'Task.name', 'Task.description', 'Creator.id', 'Creator.email', 'Creator.full_name', 'Assignee.email')));
 			if(!empty($task))	{
 				$subject = 'A comment on the task "'.$task['Task']['name'].'" was posted';				
 				$message = '<p><a href="'. Router::url(array('controller'=>'tasks', 'plugin'=>'tasks', 'action'=>'view', $task['Task']['id']), true) . '">' . $task['Task']['name'] . '</a> : Due on '.date('m/d/Y', strtotime($task['Task']['due_date'])).'<br />';			
 				$message .= $options['data']['Comment']['title'] . ' : ' . $options['data']['Comment']['body'];
 				$message .= '</p>';
-				$this->__sendMail($task['Creator']['email'], $subject, $message, $template = 'default');
+				$this->__sendMail(array($task['Creator']['email'], $task['Assignee']['email']), $subject, $message, $template = 'default');
 				# send the message via email
 			}
 		endif;		
