@@ -19,7 +19,7 @@
 
 <?php 
 // set the contextual menu items
-$this->Menu->setValue(array(
+echo $this->Element('context_menu', array('menus' => array(
 	array(
 		'heading' => 'Tasks',
 		'items' => array(
@@ -28,7 +28,6 @@ $this->Menu->setValue(array(
 			  $this->Html->link(__('List Tasks', true), array('plugin' => 'tasks', 'controller' => 'tasks', 'action' => 'index')),
 			  ),
 		),
-	)
-);
+	)));
 ?>
 

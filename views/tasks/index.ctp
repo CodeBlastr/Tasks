@@ -38,7 +38,7 @@ foreach ($tasks as $task):
 <?php echo $this->element('paging'); ?>
 <?php 
 // set the contextual menu items
-$this->Menu->setValue(array(
+echo $this->Element('context_menu', array('menus' => array(
 	array(
 		'heading' => 'Tasks',
 		'items' => array(
@@ -54,6 +54,5 @@ $this->Menu->setValue(array(
 			  $this->Html->link(__('New Enumeration', true), array('plugin' => null, 'controller' => 'enumerations', 'action' => 'add'))
 			 ),
 		),
-	)
-);
+	)));
 ?>
