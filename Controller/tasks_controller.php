@@ -204,6 +204,17 @@ class TasksController extends TasksAppController {
 		if(!empty($id)) :
 			$data['Task']['id'] = $id;
 			if ($this->Task->complete($data)) :
+				$task = $this->Task->find('first', array('recursive'=>0, 'conditions'=>array('Task.id'=>$id), 'fields'=>array('Task.id', 'Task.due_date', 'Task.assignee_id', 'Task.name', 'Task.description', 'Creator.id', 'Creator.email', 'Creator.full_name', 'Assignee.email')));
+				if(!empty($task)) :
+					$subject = 'A task "'.$task['Task']['name'].'" was marked as completed';				
+					$message = '<p>The following task was marked as completed</p>';
+					$message .= '<p><a href="'. Router::url(array('controller'=>'tasks', 'plugin'=>'tasks', 'action'=>'view', $task['Task']['id']), true) . '">' . $task['Task']['name'] . '</a> : Due on '.date('m/d/Y', strtotime($task['Task']['due_date']));			
+					$message .= '</p>';
+					$recepients = array($task['Creator']['email'], $task['Assignee']['email']);
+					//$recepients = 'arvind.mailto@gmail.com';
+					$this->__sendMail($recepients, $subject, $message, $template = 'default');
+					# send the message via email
+				endif;
 				$this->Session->setFlash('Task Completed');
 				$this->redirect($this->referer(), 'success');
 			else :
