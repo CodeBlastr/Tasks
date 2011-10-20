@@ -249,7 +249,7 @@ class TasksController extends TasksAppController {
 	 * show drop downs for the selected projects
 	 */
     function desktop_index($id = null, $userId = null){
-		$Project = ClassRegistry::init('Project');
+		$Project = ClassRegistry::init('Projects.Project');
 		$projects = $Project->findUsedObjects($userId, 'all', array('contain' => array('Contact'), 'nocheck' => $userId));
 		foreach ($projects as $project) {
 			$managedProjects[] = $project['Project']['id'];
