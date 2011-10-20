@@ -8,7 +8,7 @@
             </span><span class="metaDataDetail"><?php echo $task['Task']['name']; ?></span></li>
           <li><span class="metaDataLabel">
             <?php echo $model.' : '; ?>
-            </span><span class="metaDataDetail"><?php echo $this->Html->link(strip_tags($task['Associated'][$model][$modelDisplayField]), array('plugin' => pluginize($model), 'controller' => Inflector::tableize($model), 'action' => 'view', $foreignKey)); ?></span></li>
+            </span><span class="metaDataDetail"><?php echo $this->Html->link(strip_tags($task['Associated'][$model][$modelDisplayField]), array('plugin' => strtolower(pluginize($model)), 'controller' => Inflector::tableize($model), 'action' => 'view', $foreignKey)); ?></span></li>
         </ul>
 		<div class="recordData">
 			<div class="truncate"><?php echo $task['Task']['description']; ?></div>
@@ -20,8 +20,8 @@
 </div>
 <a name="comments"></a>
 <div id="post-comments">
-  <?php $commentWidget->options(array('allowAnonymousComment' => false));?>
-  <?php echo $commentWidget->display();?> </div>
+  <?php $this->CommentWidget->options(array('allowAnonymousComment' => false));?>
+  <?php echo $this->CommentWidget->display();?> </div>
   
 
 <script type="text/javascript">
