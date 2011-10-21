@@ -300,6 +300,20 @@ class TasksController extends TasksAppController {
 		# this is what it should be to be mvc compliant
 		$this->set('data', array($allocatedHoursSum, $trackedHoursSum, $allocatedHours['Task']['due_date']));
     }
+    
+    /** 
+    * Run cron job, called through Task/tasks_callback.php, runcron() method found in appController so it could be run from anywhere. for example http://razorit.com/webpages/webpages/runcron and http://razorit.com/users/users/runcron.
+    * @param - $assignee_id (int), for basically for testing purpose. If a valid assignee id is passed task notifications are sent to that particular user only.
+	 */
+
+    function __cron($assignee_id=null) {
+ 
+    	if(!isset($this->Task)) $this->loadModel('Task.Task');
+    	//$this->overdue_notify();
+        $this->daily_digest();
+        echo "Run at " . date("d-m-Y h:i:s");
+        return;
+    }
 
 	/** 
 	 * send email notifications for incomplete and overdue tasks
@@ -318,7 +332,7 @@ class TasksController extends TasksAppController {
        
         $allAssignees = $this->Task->find('all', array('conditions'=>$conditions, 'group'=>'Task.assignee_id', 'fields'=>'assignee_id'));
         
-        //debug($allAssignees);return;
+        debug($allAssignees);return;
         
         unset($conditions['Task.assignee_id <>']);  
         
@@ -333,10 +347,16 @@ class TasksController extends TasksAppController {
             $assigneeTasks = $this->Task->find('all', array('conditions'=>$conditions, 'fields'=>array('Task.id', 'Task.due_date', 'Task.assignee_id', 'Task.name', 'Task.description', 'Creator.id', 'Creator.email', 'Creator.full_name'), 'order'=>array('Task.due_date ASC')));            
             if($assignee_id && $assignee['Task']['assignee_id']!=$assignee_id) continue;    
             
-            $digestMessage = '';            
+            $digestMessage = '';  
+            
             $overDueMessages = $todaysMessages = $thisWeekMessages = $comingSoonMessages = '';
             
-            foreach($assigneeTasks as $task)    {            	
+            foreach($assigneeTasks as $task)    {
+            	
+            	$associated = $this->_getModelData("Task", $task);
+
+            	debug($associated);continue;
+            	
             	$creators[$task['Creator']['id']] = array('full_name'=>$task['Creator']['full_name'], 'email'=>$task['Creator']['email']);
                 //$overdue = false;
             	$highlightStr='';
@@ -408,7 +428,7 @@ class TasksController extends TasksAppController {
             	$digestMessage .= '</ul>' . "\n";
             }
             //debug($digestMessage);
-            $this->__sendMail($assigneeDetails['Assignee']['email'], 'Daily Task Digest', $digestMessage, $template = 'default');
+            //$this->__sendMail($assigneeDetails['Assignee']['email'], 'Daily Task Digest', $digestMessage, $template = 'default');
         }
         
 		foreach($creatorMessages as $creator_id=>$messages)	{
@@ -427,7 +447,7 @@ class TasksController extends TasksAppController {
 			$subject = $creators[$creator_id]['full_name'] ."'s Task Digest for ".date("m/d/Y");
 			
 			if($digestMessage!="")	{
-				$this->__sendMail($creators[$creator_id]['email'],  $subject, $digestMessage, $template = 'default');
+				//$this->__sendMail($creators[$creator_id]['email'],  $subject, $digestMessage, $template = 'default');
 				break;
 			}
 		}
@@ -467,14 +487,6 @@ class TasksController extends TasksAppController {
             //$this->Task->saveField('last_notified_date', date('Y-m-d'));
         }
     }
-
-    function __cron($assignee_id=null) {    	
-    	if(!isset($this->Task)) $this->loadModel('Task');
-    	$this->overdue_notify();
-        $this->daily_digest();
-        echo "Run at " . date("d-m-Y h:i:s");
-        return;
-    }
 	
 	/**
 	 * @todo	 This send message thing is used here, and in the messages controller itself.  I don't know where we could put it so that its usable between both.  (Probably would have to do some kind of added on, slow component thing).
@@ -493,5 +505,20 @@ class TasksController extends TasksAppController {
 				# send the message via email
 			}
 		endif;		
+	}
+	
+	/**
+	* To get "model" data for a task. Project in this case
+	*
+	*/
+	
+	function _getModelData($curr_model, $data=array())	{
+		if(!isset($data[$curr_model]['model']) || !isset($data[$curr_model]['foreign_key'])) return false;
+		$plugin = pluginize($data[$curr_model]['model']);
+		$model = $data[$curr_model]['model'];
+		$init = !empty($plugin) ? $plugin . '.' . $model : $model;
+		$foreignKey = $data[$curr_model]['foreign_key'];
+		$Model = ClassRegistry::init($init);
+		return $Model->find('first', array('conditions' => array($model.'.id' => $foreignKey), 'fields'=>array($Model->displayField), 'recursive'=>-1));            		
 	}
 }
