@@ -265,11 +265,13 @@ class TasksController extends TasksAppController {
 				'Task.assignee_id' => $userId,
 				)
 			));
-		$this->str = '<option value="">-- Select --</option>';
+		$str = '<option value="">-- Select --</option>';
         for($i= 0 ;$i<sizeof($taskList);$i++){
-            $this->str .= "<option value=".$taskList[$i]['Task']['id'].">".substr($taskList[$i]['Task']['name'], 0, 40).'...'."</option>";
+            $str .= "<option value=".$taskList[$i]['Task']['id'].">".substr($taskList[$i]['Task']['name'], 0, 40).'...'."</option>";
         }
-        $this->set('data', $this->str);  
+		#$this->set('data', $str);
+		echo $str;
+		$this->render(false);
     }
 	
 	
