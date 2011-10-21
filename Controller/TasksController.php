@@ -33,7 +33,7 @@ class TasksController extends TasksAppController {
 		$this->Task->recursive = 0;	
 		$this->paginate = array(
 			'conditions' => array(
-				'Task.parent_id is not' => null,
+				'Task.parent_id NOT' => null,
 				'Task.is_completed' => 0,
 				),
 			'order' => array(
@@ -493,4 +493,3 @@ class TasksController extends TasksAppController {
 		endif;		
 	}
 }
-?>
