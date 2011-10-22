@@ -316,7 +316,7 @@ class TasksController extends TasksAppController {
 	 */
 
     function __cron($assignee_id=null) {
-    	if(!isset($this->User)) ClassRegistry::init("Tasks.Task");
+    	ClassRegistry::init("Tasks.Task");
     	$this->overdue_notify();
         $this->daily_digest();
         echo "Run at " . date("d-m-Y h:i:s");
