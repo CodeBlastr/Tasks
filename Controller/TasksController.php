@@ -308,7 +308,7 @@ class TasksController extends TasksAppController {
 
     function __cron($assignee_id=null) {
  
-    	if(!isset($this->Task)) $this->loadModel('Task.Task');
+    	//if(!isset($this->Task)) $this->loadModel('Task.Task');
     	//$this->overdue_notify();
         $this->daily_digest();
         echo "Run at " . date("d-m-Y h:i:s");
@@ -322,15 +322,25 @@ class TasksController extends TasksAppController {
     function daily_digest($assignee_id=null) {
     	
         $this->autoRender=false;
-        $this->Task->recursive = 0;
+        $this->Task->recursive = 2;
         $conditions['AND'] = array('OR'=>array('Task.last_notified_date'=>null, 'Task.last_notified_date <>'=>date('Y-m-d')));
         $conditions['Task.assignee_id <>'] = null;
         $conditions['OR'] = array(
 				array('Task.is_completed' => 0),
 				array('Task.is_completed' => null),
 			);
-       
-        $allAssignees = $this->Task->find('all', array('conditions'=>$conditions, 'group'=>'Task.assignee_id', 'fields'=>'assignee_id'));
+        
+		//debug($this->Task);
+        $allAssignees = $this->Task->find('all', array(
+        	'conditions'=>$conditions, 
+        	'group'=>'Task.assignee_id', 
+        	'fields'=>'*', 
+        	'recursive'=>2,
+        	'contain' => array('Creator')
+        	
+        	));
+        
+        debug($this->Task->recursive);
         
         debug($allAssignees);return;
         
