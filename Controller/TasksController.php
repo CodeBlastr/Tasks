@@ -204,11 +204,20 @@ class TasksController extends TasksAppController {
 		if(!empty($id)) :
 			$data['Task']['id'] = $id;
 			if ($this->Task->complete($data)) :
-				$task = $this->Task->find('first', array('recursive'=>0, 'conditions'=>array('Task.id'=>$id), 'fields'=>array('Task.id', 'Task.due_date', 'Task.assignee_id', 'Task.name', 'Task.description', 'Creator.id', 'Creator.email', 'Creator.full_name', 'Assignee.email')));
+				$task = $this->Task->find('first', array('recursive'=>0, 'conditions'=>array('Task.id'=>$id), 'fields'=>array('Task.id', 'Task.due_date', 'Task.assignee_id', 'Task.name', 'Task.description', 'Task.model', 'Task.foreign_key', 'Creator.id', 'Creator.email', 'Creator.full_name', 'Assignee.email')));
 				if(!empty($task)) :
 					$subject = 'A task "'.$task['Task']['name'].'" was marked as completed';				
 					$message = '<p>The following task was marked as completed</p>';
-					$message .= '<p><a href="'. Router::url(array('controller'=>'tasks', 'plugin'=>'tasks', 'action'=>'view', $task['Task']['id']), true) . '">' . $task['Task']['name'] . '</a> : Due on '.date('m/d/Y', strtotime($task['Task']['due_date']));			
+					
+					$taskLabel = $task['Task']['name'];
+
+					$associated = $this->__findAssociated("Task", $task);
+					
+					if($associated)	{
+						$taskLabel .= ' : ' . $associated[$task['Task']['model']]['displayName'];	
+					}
+					
+					$message .= '<p><a href="'. Router::url(array('controller'=>'tasks', 'plugin'=>'tasks', 'action'=>'view', $task['Task']['id']), true) . '">' . $taskLabel . '</a> : Due on '.date('m/d/Y', strtotime($task['Task']['due_date']));			
 					$message .= '</p>';
 					$recepients = array($task['Creator']['email'], $task['Assignee']['email']);
 					//$recepients = 'arvind.mailto@gmail.com';
@@ -307,9 +316,8 @@ class TasksController extends TasksAppController {
 	 */
 
     function __cron($assignee_id=null) {
- 
-    	//if(!isset($this->Task)) $this->loadModel('Task.Task');
-    	//$this->overdue_notify();
+    	if(!isset($this->User)) ClassRegistry::init("Tasks.Task");
+    	$this->overdue_notify();
         $this->daily_digest();
         echo "Run at " . date("d-m-Y h:i:s");
         return;
@@ -322,87 +330,66 @@ class TasksController extends TasksAppController {
     function daily_digest($assignee_id=null) {
     	
         $this->autoRender=false;
-        $this->Task->recursive = 2;
+        $this->Task->recursive = 0;
         $conditions['AND'] = array('OR'=>array('Task.last_notified_date'=>null, 'Task.last_notified_date <>'=>date('Y-m-d')));
         $conditions['Task.assignee_id <>'] = null;
         $conditions['OR'] = array(
 				array('Task.is_completed' => 0),
 				array('Task.is_completed' => null),
 			);
-        
-		//debug($this->Task);
+
         $allAssignees = $this->Task->find('all', array(
         	'conditions'=>$conditions, 
         	'group'=>'Task.assignee_id', 
-        	'fields'=>'*', 
-        	'recursive'=>2,
-        	'contain' => array('Creator')
+        	'fields'=>array('Task.assignee_id'), 
+        	'recursive'=>0
         	
         	));
         
-        debug($this->Task->recursive);
-        
-        debug($allAssignees);return;
-        
         unset($conditions['Task.assignee_id <>']);  
+        Configure::write('debug', 2);
         
         $creators = array();$creatorMessages = array();
 
         foreach($allAssignees as $assignee) {
-        	
-        	//debug($assignee);
 
             $assigneeDetails = $this->Task->Assignee->find('first', array('conditions'=>array('Assignee.id'=>$assignee['Task']['assignee_id']), 'fields'=>array('id', 'full_name', 'email')));
             $conditions['Task.assignee_id'] = $assignee['Task']['assignee_id'];            
-            $assigneeTasks = $this->Task->find('all', array('conditions'=>$conditions, 'fields'=>array('Task.id', 'Task.due_date', 'Task.assignee_id', 'Task.name', 'Task.description', 'Creator.id', 'Creator.email', 'Creator.full_name'), 'order'=>array('Task.due_date ASC')));            
-            if($assignee_id && $assignee['Task']['assignee_id']!=$assignee_id) continue;    
+            $assigneeTasks = $this->Task->find('all', array('conditions'=>$conditions, 'fields'=>array('Task.id', 'Task.due_date', 'Task.assignee_id', 'Task.name', 'Task.description', 'Creator.id', 'Creator.email', 'Creator.full_name', 'Task.model', 'Task.foreign_key'), 'order'=>array('Task.due_date ASC')));            
+            if($assignee_id && $assignee['Task']['assignee_id']!=$assignee_id) continue;
             
             $digestMessage = '';  
             
             $overDueMessages = $todaysMessages = $thisWeekMessages = $comingSoonMessages = '';
             
+            $msgArray = array(
+            		'Over Due'=>null,
+            		'Due Today'=>null,
+            		'Due This Week'=>null,
+            		'Coming Soon'=>null
+            	);
+            
             foreach($assigneeTasks as $task)    {
             	
-            	$associated = $this->_getModelData("Task", $task);
-
-            	debug($associated);continue;
+            	$associated = $this->__findAssociated("Task", $task);
+            	
+            	$associated = ($associated) ? $associated : array();
             	
             	$creators[$task['Creator']['id']] = array('full_name'=>$task['Creator']['full_name'], 'email'=>$task['Creator']['email']);
-                //$overdue = false;
-            	$highlightStr='';
-                if(strtotime($task['Task']['due_date']) < strtotime(date('Y-m-d')))    {
-                    //$overdue = true;
-                    $highlightStr = 'style="background-color:#ffff9e"';                    
-                    $eachMessage = '<li>';//' . $highlightStr . '
-					$eachMessage .= '<a href="'. Router::url(array('controller'=>'tasks', 'plugin'=>'tasks', 'action'=>'view', $task['Task']['id']), true) . '">' . $task['Task']['name'] . '</a> : ' . date('M d, \'y', strtotime($task['Task']['due_date'])) . "<br/ >\n";
-					$eachMessage .= $task['Task']['description'];
-					$eachMessage .= '</li>'."\n";
-					$overDueMessages .= $eachMessage;
-					
-					$creatorMessages[$task['Creator']['id']]['Over Due'][] = $eachMessage;					
+
+            	$eachMessage = array_merge($task, $associated);
+            	
+                if(strtotime($task['Task']['due_date']) < strtotime(date('Y-m-d')))    {                	
+                	$msgArray['Over Due'][] = $eachMessage;
+                	$creatorMessages[$task['Creator']['id']]['Over Due'][] = $eachMessage;
                 }	elseif(strtotime($task['Task']['due_date']) == strtotime(date('Y-m-d')))	{
-                    $eachMessage ='<li>';//' . $highlightStr . '
-					$eachMessage .='<a href="'. Router::url(array('controller'=>'tasks', 'plugin'=>'tasks', 'action'=>'view', $task['Task']['id']), true) . '">' . $task['Task']['name'] . '</a> : ' . date('M d, \'y', strtotime($task['Task']['due_date'])) . "<br/ >\n";
-					$eachMessage .=$task['Task']['description'];
-					$eachMessage .='</li>'."\n";	
-					$todaysMessages .= $eachMessage;
-					
+                	$msgArray['Due Today'][] = $eachMessage;					
 					$creatorMessages[$task['Creator']['id']]['Due Today'][] = $eachMessage;					
                 }	elseif (strtotime($task['Task']['due_date']) <= strtotime(date('Y-m-d') . ' add +7 day'))	{
-                    $eachMessage = '<li>';//' . $highlightStr . '
-					$eachMessage .= '<a href="'. Router::url(array('controller'=>'tasks', 'plugin'=>'tasks', 'action'=>'view', $task['Task']['id']), true) . '">' . $task['Task']['name'] . '</a> : ' . date('M d, \'y', strtotime($task['Task']['due_date'])) . "<br/ >\n";
-					$eachMessage .= $task['Task']['description'];
-					$eachMessage .= '</li>'."\n";	
-					$thisWeekMessages .= $eachMessage;
-					
+                    $msgArray['Due This Week'][] = $eachMessage;					
 					$creatorMessages[$task['Creator']['id']]['Due This Week'][] = $eachMessage;
                 }	else{
-                    $eachMessage = '<li>';//' . $highlightStr . '
-					$eachMessage .= '<a href="'. Router::url(array('controller'=>'tasks', 'plugin'=>'tasks', 'action'=>'view', $task['Task']['id']), true) . '">' . $task['Task']['name'] . '</a> : ' . date('M d, \'y', strtotime($task['Task']['due_date'])) . "<br/ >\n";
-					$eachMessage .= $task['Task']['description'];
-					$eachMessage .= '</li>'."\n";	
-					$comingSoonMessages .= $eachMessage;
-					
+                	$msgArray['Coming Soon'][] = $eachMessage;					
 					$creatorMessages[$task['Creator']['id']]['Coming Soon'][] = $eachMessage;
                 }
                 
@@ -410,35 +397,24 @@ class TasksController extends TasksAppController {
 				$this->Task->saveField('last_notified_date', date('Y-m-d'));
             }
             
-            if($overDueMessages!="")	{
-            	$digestMessage .= 'Over due' . "\n";
-            	$digestMessage .= '<ul>' . "\n";
-            	$digestMessage .= $overDueMessages . "\n";
-            	$digestMessage .= '</ul>' . "\n";
+            foreach($msgArray as $title=>$dueTasks)	{
+            	if($dueTasks)	{
+            		$digestMessage .= $title . "\n";
+            		$digestMessage .= '<ul>' . "\n";
+            		foreach($dueTasks as $dueTask)	{
+            			$digestMessage .= '<li>';    			
+            			$taskLabel = $dueTask['Task']['name'];            			
+            			if(isset($dueTask['Project']))	{
+            				$taskLabel .= ' : ' . $dueTask[$dueTask['Task']['model']]['displayName'];
+            			}            			
+						$digestMessage .= '<a href="'. Router::url(array('controller'=>'tasks', 'plugin'=>'tasks', 'action'=>'view', $dueTask['Task']['id']), true) . '">' . $taskLabel . '</a> : ' . date('M d, \'y', strtotime($dueTask['Task']['due_date'])) . "<br/ >\n";
+						$digestMessage .= $dueTask['Task']['description'];
+						$digestMessage .= '</li>'."\n";
+            		}
+            		$digestMessage .= '</ul>' . "\n";
+            	}
             }
-            
-            if($todaysMessages!="")	{
-            	$digestMessage .= 'Due Today' . "\n";
-            	$digestMessage .= '<ul>' . "\n";
-            	$digestMessage .= $todaysMessages . "\n";
-            	$digestMessage .= '</ul>' . "\n";
-            }
-            
-            if($thisWeekMessages!="")	{
-            	$digestMessage .= 'Due This Week' . "\n";
-            	$digestMessage .= '<ul>' . "\n";
-            	$digestMessage .= $thisWeekMessages . "\n";
-            	$digestMessage .= '</ul>' . "\n";
-            }
-            
-            if($comingSoonMessages!="")	{
-            	$digestMessage .= 'Coming Soon' . "\n";
-            	$digestMessage .= '<ul>' . "\n";
-            	$digestMessage .= $comingSoonMessages . "\n";
-            	$digestMessage .= '</ul>' . "\n";
-            }
-            //debug($digestMessage);
-            //$this->__sendMail($assigneeDetails['Assignee']['email'], 'Daily Task Digest', $digestMessage, $template = 'default');
+            $this->__sendMail($assigneeDetails['Assignee']['email'], 'Daily Task Digest', $digestMessage, $template = 'default');
         }
         
 		foreach($creatorMessages as $creator_id=>$messages)	{
@@ -448,8 +424,15 @@ class TasksController extends TasksAppController {
 			foreach($messages as $taskTitle=>$msgArray)	{
 				$digestMessage .= $taskTitle . "\n";
 				$digestMessage .= '<ul>' . "\n";
-				foreach($msgArray as $msgString)	{
-				$digestMessage .= $msgString;
+				foreach($msgArray as $dueTask)	{
+					$digestMessage .= '<li>';      			
+					$taskLabel = $dueTask['Task']['name'];            			
+					if(isset($dueTask['Project']))	{
+						$taskLabel .= ' : ' . $dueTask['Project']['displayName'];
+					}            			
+					$digestMessage .= '<a href="'. Router::url(array('controller'=>'tasks', 'plugin'=>'tasks', 'action'=>'view', $dueTask['Task']['id']), true) . '">' . $taskLabel . '</a> : ' . date('M d, \'y', strtotime($dueTask['Task']['due_date'])) . "<br/ >\n";
+					$digestMessage .= $dueTask['Task']['description'];
+					$digestMessage .= '</li>'."\n";
 				}
 				$digestMessage .= '</ul>';
 			}
@@ -457,7 +440,7 @@ class TasksController extends TasksAppController {
 			$subject = $creators[$creator_id]['full_name'] ."'s Task Digest for ".date("m/d/Y");
 			
 			if($digestMessage!="")	{
-				//$this->__sendMail($creators[$creator_id]['email'],  $subject, $digestMessage, $template = 'default');
+				$this->__sendMail($creators[$creator_id]['email'],  $subject, $digestMessage, $template = 'default');
 				break;
 			}
 		}
@@ -480,21 +463,29 @@ class TasksController extends TasksAppController {
 
         $conditions['Task.due_date <='] = date('Y-m-d');
        
-        $allTasks = $this->Task->find('all', array('conditions'=>$conditions, 'order'=>'Task.due_date asc', 'fields'=>array('Task.id', 'Task.due_date', 'Task.assignee_id', 'Task.name', 'Task.description', 'Creator.email', 'Assignee.full_name', 'Assignee.email')));
+        $allTasks = $this->Task->find('all', array('conditions'=>$conditions, 'order'=>'Task.due_date asc', 'fields'=>array('Task.id', 'Task.due_date', 'Task.assignee_id', 'Task.name', 'Task.description', 'Task.model', 'Task.foreign_key', 'Creator.email', 'Assignee.full_name', 'Assignee.email')));
 
         foreach($allTasks as $task) {
+        	
+        	$associated = $this->__findAssociated("Task", $task);
 
             if($assignee_id && $task['Task']['assignee_id']!=$assignee_id) continue;
+            
+            $taskLabel = $task['Task']['name'];
+            
+            if($associated)	{
+            	$taskLabel .= ' : ' . $associated[$task['Task']['model']]['displayName'];
+            }
 
-            $message = '<p>You have a task which is over due.  If you\'ve received this message in error please login to mark the task as complete.  ' . Router::url(array('controller'=>'tasks', 'plugin'=>'tasks', 'action'=>'view', $task['Task']['id']), true) . '</p>';
+            $message = '<p>You have a task which is over due.  If you\'ve received this message in error please login to mark the task as complete.  <a href="'. Router::url(array('controller'=>'tasks', 'plugin'=>'tasks', 'action'=>'view', $task['Task']['id']), true) . '">' . $taskLabel . '</a>' . '</p>';
             
             $subject = 'Overdue Task : Was due on' .  date('m/d/Y', strtotime($task['Task']['due_date']));
             //array($task['Assignee']['email'], $task['Creator']['email'])
 
             $this->__sendMail(array($task['Assignee']['email'], $task['Creator']['email']) , $subject, $message, $template = 'default');
            
-            //$this->Task->id = $task['Task']['id'];
-            //$this->Task->saveField('last_notified_date', date('Y-m-d'));
+            $this->Task->id = $task['Task']['id'];
+            $this->Task->saveField('last_notified_date', date('Y-m-d'));
         }
     }
 	
@@ -505,10 +496,19 @@ class TasksController extends TasksAppController {
 	function _callback_commentsafterAdd($options) {		
 		if ($this->request->params['action'] == 'view') :		
 			$this->Task->recursive = 0;
-			$task = $this->Task->find('first', array('conditions'=>array('Task.id'=>$options['modelId']), 'fields'=>array('Task.id', 'Task.due_date', 'Task.assignee_id', 'Task.name', 'Task.description', 'Creator.id', 'Creator.email', 'Creator.full_name', 'Assignee.email')));
+			$task = $this->Task->find('first', array('conditions'=>array('Task.id'=>$options['modelId']), 'fields'=>array('Task.id', 'Task.due_date', 'Task.assignee_id', 'Task.name', 'Task.description', 'Task.model', 'Task.foreign_key', 'Creator.id', 'Creator.email', 'Creator.full_name', 'Assignee.email')));
 			if(!empty($task))	{
-				$subject = 'A comment on the task "'.$task['Task']['name'].'" was posted';				
-				$message = '<p><a href="'. Router::url(array('controller'=>'tasks', 'plugin'=>'tasks', 'action'=>'view', $task['Task']['id']), true) . '">' . $task['Task']['name'] . '</a> : Due on '.date('m/d/Y', strtotime($task['Task']['due_date'])).'<br />';			
+				$subject = 'A comment on the task "'.$task['Task']['name'].'" was posted';
+				
+				$taskLabel = $task['Task']['name'];
+
+				$associated = $this->__findAssociated("Task", $task);
+				
+				if($associated)	{
+					$taskLabel .= ' : ' . $associated[$task['Task']['model']]['displayName'];	
+				}				
+				
+				$message = '<p><a href="'. Router::url(array('controller'=>'tasks', 'plugin'=>'tasks', 'action'=>'view', $task['Task']['id']), true) . '">' . $taskLabel . '</a> : Due on '.date('m/d/Y', strtotime($task['Task']['due_date'])).'<br />';			
 				$message .= $options['data']['Comment']['title'] . ' : ' . $options['data']['Comment']['body'];
 				$message .= '</p>';
 				$this->__sendMail(array($task['Creator']['email'], $task['Assignee']['email']), $subject, $message, $template = 'default');
@@ -522,13 +522,14 @@ class TasksController extends TasksAppController {
 	*
 	*/
 	
-	function _getModelData($curr_model, $data=array())	{
+	function __findAssociated($curr_model, $data=array())	{
+		$this->autoRender=false;
 		if(!isset($data[$curr_model]['model']) || !isset($data[$curr_model]['foreign_key'])) return false;
 		$plugin = pluginize($data[$curr_model]['model']);
 		$model = $data[$curr_model]['model'];
 		$init = !empty($plugin) ? $plugin . '.' . $model : $model;
 		$foreignKey = $data[$curr_model]['foreign_key'];
 		$Model = ClassRegistry::init($init);
-		return $Model->find('first', array('conditions' => array($model.'.id' => $foreignKey), 'fields'=>array($Model->displayField), 'recursive'=>-1));            		
+		return $Model->find('first', array('conditions' => array($model.'.id' => $foreignKey), 'fields'=>array($Model->name  . '.' . $Model->displayField)));
 	}
 }
