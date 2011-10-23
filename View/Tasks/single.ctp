@@ -25,11 +25,12 @@
 <?php 
 // set the contextual menu items 
 $completeAction = $task['Task']['is_completed'] == 1 ? $this->Html->link(__('Mark as Incomplete'), array('controller' => 'tasks', 'action' => 'incomplete', $task['Task']['id'])) : $this->Html->link(__('Mark as Complete'), array('controller' => 'tasks', 'action' => 'complete', $task['Task']['id']));
+
+$this->set('quickNavAfterBack_callback', $this->Html->link(strip_tags($task['Associated'][$model][$modelDisplayField] . ' ' . $model), array('plugin' => strtolower(pluginize($model)), 'controller' => Inflector::tableize($model), 'action' => 'view', $foreignKey), array('escape' => false)));
 echo $this->Element('context_menu', array('menus' => array(
 	array(
 		'heading' => 'Project Manager',
 		'items' => array(
-			$this->Html->link(strip_tags($task['Associated'][$model][$modelDisplayField] . ' ' . $model), array('plugin' => strtolower(pluginize($model)), 'controller' => Inflector::tableize($model), 'action' => 'view', $foreignKey), array('escape' => false)),
 			$this->Html->link(__('Edit'), array('controller' => 'tasks', 'action' => 'edit', $task['Task']['id'])),
 			$completeAction,
 			),
