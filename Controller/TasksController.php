@@ -278,9 +278,8 @@ class TasksController extends TasksAppController {
         for($i= 0 ;$i<sizeof($taskList);$i++){
             $str .= "<option value=".$taskList[$i]['Task']['id'].">".substr($taskList[$i]['Task']['name'], 0, 40).'...'."</option>";
         }
-		#$this->set('data', $str);
-		echo $str;
-		$this->render(false);
+		$this->set('data', $str);
+		$this->layout = false;
     }
 	
 	
