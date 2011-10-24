@@ -13,7 +13,10 @@ class TasksCallback	{
 			App::import('Controller', 'Tasks.Tasks');
 			$Tasks = new TasksController;
 			$Tasks->SwiftMailer = $this->Controller->SwiftMailer;
-			$Tasks->__cron();
+			
+			$options = $this->Controller->request->query;
+			
+			$Tasks->__cron($options);
 		}
 	}
 }
