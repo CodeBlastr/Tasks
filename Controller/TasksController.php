@@ -444,11 +444,10 @@ class TasksController extends TasksAppController {
             		$digestMessage .= '</ul>' . "\n";
             	}
             }
-            //debug($digestMessage);
-            if($assigneeDetails['Assignee']['email']!='php.arvind@gmail.com') continue;
+
             $this->__sendMail($assigneeDetails['Assignee']['email'], 'Daily Task Digest', $digestMessage, $template = 'default');
         }
-        
+
 		foreach($creatorMessages as $creator_id=>$messages)	{
 		
 			$digestMessage = '';
