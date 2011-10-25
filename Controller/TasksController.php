@@ -295,8 +295,8 @@ class TasksController extends TasksAppController {
 			$allocatedHoursSum = '0.00';
 		}
 		# find the number of hours that have been logged for this task
-		$this->TimesheetTime = ClassRegistry::init('TimesheetTime');
-		$trackedTimes = $this->TimesheetTime->find('all', array('conditions' => array('task_id' => $id), 'fields' => 'hours'));
+		$TimesheetTime = ClassRegistry::init('Timesheets.TimesheetTime');
+		$trackedTimes = $TimesheetTime->find('all', array('conditions' => array('task_id' => $id), 'fields' => 'hours'));
 		if(!empty($trackedTimes)) {
 			foreach ($trackedTimes as $trackedTime) {
 				$trackedHours[] = $trackedTime['TimesheetTime']['hours'];
@@ -307,6 +307,7 @@ class TasksController extends TasksAppController {
 		}
 		# this is what it should be to be mvc compliant
 		$this->set('data', array($allocatedHoursSum, $trackedHoursSum, $allocatedHours['Task']['due_date']));
+		
     }
     
     /** 
