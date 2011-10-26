@@ -334,17 +334,25 @@ class TasksController extends TasksAppController {
     		unset($options['assignee_id']);
     	}
     	
+    	$options['tn_skip_update'] = false;
+    	
     	if(!isset($options['skip_single'])) {
+    		
+    		if(!isset($options['skip_digest']))	{
+    			$options['tn_skip_update'] = true;
+    		}    		
     		
     		$this->overdue_notify($options);
     		
+    		$options['tn_skip_update'] = false;
+    		
     		//after the overdue single notifications has been send make it to repeat for same day for the Digest
-    		if(!isset($options['skip_digest']))	{
-    			$options['tn_repeat'] = true;
-    		}
+    		//if(!isset($options['skip_digest']))	{
+    		//	$options['tn_repeatx'] = true;
+    		//}
        	}
      	
-        if(!isset($options['skip_digest'])) {
+        if(!isset($options['skip_digest'])) {        	
         	$this->daily_digest($options);
         }
         
@@ -438,8 +446,10 @@ class TasksController extends TasksAppController {
 					$creatorMessages[$task['Creator']['id']]['Coming Soon'][] = $eachMessage;
                 }
                 
-				$this->Task->id = $task['Task']['id'];
-				$this->Task->saveField('last_notified_date', date('Y-m-d'));
+                if(!$options['tn_skip_update'])	{
+					$this->Task->id = $task['Task']['id'];
+					$this->Task->saveField('last_notified_date', date('Y-m-d'));
+				}
             }
             
             foreach($msgArray as $title=>$dueTasks)	{
@@ -558,8 +568,10 @@ class TasksController extends TasksAppController {
 
             $this->__sendMail(array($task['Assignee']['email'], $task['Creator']['email']) , $subject, $message, $template = 'default');
            
-            $this->Task->id = $task['Task']['id'];
-            $this->Task->saveField('last_notified_date', date('Y-m-d'));
+            if(!$options['tn_skip_update'])	{
+				$this->Task->id = $task['Task']['id'];
+				$this->Task->saveField('last_notified_date', date('Y-m-d'));
+            }
         }
     }
 	
