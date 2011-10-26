@@ -156,7 +156,13 @@ class TasksController extends TasksAppController {
 		if (empty($this->request->data)) {
 			$this->request->data = $this->Task->read(null, $id);
 		}
-		$parents = $this->Task->ParentTask->find('list');
+		$parents = $this->Task->ParentTask->find('list', array(
+			'conditions' => array(
+				'ParentTask.model' => $this->request->data['Task']['model'],
+				'ParentTask.foreign_key' => $this->request->data['Task']['foreign_key'],
+				'ParentTask.parent_id' => null,
+				),
+			));
 		$assignees = $this->Task->Assignee->find('list');
 		$this->set(compact('parents','assignees'));
 	}
