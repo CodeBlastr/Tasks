@@ -335,10 +335,18 @@ class TasksController extends TasksAppController {
     	}
     	
     	if(!isset($options['skip_single'])) {
+    		
     		$this->overdue_notify($options);
+    		
+    		//after the overdue single notifications has been send make it to repeat for same day for the Digest
+    		if(!isset($options['skip_digest']))	{
+    			$options['tn_repeat'] = true;
+    		}
        	}
      	
-        if(!isset($options['skip_digest'])) $this->daily_digest($options);
+        if(!isset($options['skip_digest'])) {
+        	$this->daily_digest($options);
+        }
         
         echo "Run at " . date("d-m-Y h:i:s");
         return;
@@ -352,23 +360,30 @@ class TasksController extends TasksAppController {
    	
         $this->autoRender=false;
         $this->Task->recursive = 0;
-        
-        $conditions['AND'] = array('OR'=>array('Task.last_notified_date'=>null));        
+
         if(!isset($options['tn_repeat']))	{
-        	$conditions['AND']['OR']['Task.last_notified_date <>'] = date('Y-m-d');
+        	$conditions['AND'] = array(
+        		'OR'=>array(
+					'Task.last_notified_date'=>null,
+					'Task.last_notified_date <>'=>date('Y-m-d')
+				)
+			);
         }	else	{
-        	$conditions['AND']['OR']['Task.last_notified_date'] = date('Y-m-d');
-        }
-        
-        //$conditions['AND'] = array('OR'=>array('Task.last_notified_date'=>null, 'Task.last_notified_date <>'=>date('Y-m-d')));
+        	/*$conditions['AND'] = array(
+        		'OR'=>array(
+					array('Task.last_notified_date'=>null),
+					array('Task.last_notified_date'=>date('Y-m-d'))
+				)
+			);*/
+         }
         
         $conditions['Task.assignee_id <>'] = null;
         $conditions['Task.due_date <>'] = '0000-00-00';
         $conditions['OR'] = array(
-				array('Task.is_completed' => 0),
-				array('Task.is_completed' => null),
-			);
-		//debug($conditions);die;
+			array('Task.is_completed' => 0),
+			array('Task.is_completed' => null),
+		);
+
         $allAssignees = $this->Task->find('all', array(
         	'conditions'=>$conditions, 
         	'group'=>'Task.assignee_id', 
@@ -444,9 +459,15 @@ class TasksController extends TasksAppController {
             		$digestMessage .= '</ul>' . "\n";
             	}
             }
-
+            
+            //debug($assigneeDetails['Assignee']['email']);
+            
+            //if($assigneeDetails['Assignee']['email']!='php.arvind@gmail.com') continue;
+            
             $this->__sendMail($assigneeDetails['Assignee']['email'], 'Daily Task Digest', $digestMessage, $template = 'default');
         }
+        
+        //return;
 
 		foreach($creatorMessages as $creator_id=>$messages)	{
 		
@@ -471,6 +492,9 @@ class TasksController extends TasksAppController {
 			$subject = $creators[$creator_id]['full_name'] ."'s Task Digest for ".date("m/d/Y");
 			
 			if($digestMessage!="")	{
+				
+				 //if($creators[$creator_id]['email']!='php.arvind@gmail.com') continue;
+				 
 				$this->__sendMail($creators[$creator_id]['email'],  $subject, $digestMessage, $template = 'default');
 				break;
 			}
@@ -486,14 +510,22 @@ class TasksController extends TasksAppController {
         $this->autoRender=false;
         $this->Task->recursive = 0;
         
-        $conditions['AND'] = array('OR'=>array('Task.last_notified_date'=>null));        
         if(!isset($options['tn_repeat']))	{
-        	$conditions['AND']['OR']['Task.last_notified_date <>'] = date('Y-m-d');
+        	$conditions['AND'] = array(
+        		'OR'=>array(
+					'Task.last_notified_date'=>null,
+					'Task.last_notified_date <>'=>date('Y-m-d')
+				)
+			);
         }	else	{
-        	$conditions['AND']['OR']['Task.last_notified_date'] = date('Y-m-d');
-        }
+        	/*$conditions['AND'] = array(
+        		'OR'=>array(
+					array('Task.last_notified_date'=>null),
+					array('Task.last_notified_date'=>date('Y-m-d'))
+				)
+			);*/
+         }
         
-        //$conditions['AND'] = array('OR'=>array('Task.last_notified_date'=>null, 'Task.last_notified_date <>'=>date('Y-m-d')));
         $conditions['Task.assignee_id <>'] = null;
         $conditions['Task.due_date <>'] = '0000-00-00';
         $conditions['OR'] = array(
@@ -521,11 +553,13 @@ class TasksController extends TasksAppController {
             
             $subject = 'Overdue Task : Was due on' .  date('m/d/Y', strtotime($task['Task']['due_date']));
             //array($task['Assignee']['email'], $task['Creator']['email'])
+            
+            //if($task['Assignee']['email']!='php.arvind@gmail.com') continue;
 
             $this->__sendMail(array($task['Assignee']['email'], $task['Creator']['email']) , $subject, $message, $template = 'default');
            
-            //$this->Task->id = $task['Task']['id'];
-            //$this->Task->saveField('last_notified_date', date('Y-m-d'));
+            $this->Task->id = $task['Task']['id'];
+            $this->Task->saveField('last_notified_date', date('Y-m-d'));
         }
     }
 	
