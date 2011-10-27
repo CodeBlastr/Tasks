@@ -1,5 +1,5 @@
 <?php
-class TasksController extends TasksAppController {
+class TasksController extends TasksAppController { 
 
 	var $name = 'Tasks';
 	var $components = array('Comments.Comments' => array('userModelClass' => 'Users.User'));
