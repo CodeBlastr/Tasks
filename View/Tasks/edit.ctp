@@ -5,10 +5,11 @@
 	<?php
 		echo $this->Form->input('Task.id');
 		echo $this->Form->input('Task.name');
+		echo $this->Form->input('Task.parent_id', array('label' => 'Task List', 'empty' => true));
 		echo $this->Form->input('Task.description', array('type' => 'richtext'));
 		echo $this->Form->input('Task.due_date');
 		echo $this->Form->input('Task.order');
-		echo $this->Form->input('Task.assignee_id');
+		echo $this->Form->input('Task.assignee_id', array('empty' => true));
 		echo $this->Form->input('Task.model', array('type' => 'hidden'));
 		echo $this->Form->input('Task.foreign_key', array('type' => 'hidden'));
 	?>
