@@ -3,7 +3,9 @@ class TasksController extends TasksAppController {
 
 	var $name = 'Tasks';
 	var $components = array('Comments.Comments' => array('userModelClass' => 'Users.User'));
-	var $allowedActions = array('desktop_index', 'desktop_view', 'testthefun');
+	var $allowedActions = array('desktop_index', 'desktop_view');
+	
+	public $Text;
 	
 	function beforeFilter() {
 		parent::beforeFilter();
@@ -347,6 +349,9 @@ class TasksController extends TasksAppController {
     	
     	$options['tn_skip_update'] = false;
     	
+        
+
+
     	//if(!$options['skip_single']) {
     		
     		/*if(!$options['skip_digest']))	{
@@ -375,6 +380,10 @@ class TasksController extends TasksAppController {
 	 */
 
     function daily_digest($options=array()) {
+    	
+    	App::import('Helper', 'Text');
+		App::uses('View', 'View');
+		$this->Text = & new TextHelper(new View($this));
    	
         $this->autoRender=false;
         $this->Task->recursive = 0;
@@ -472,7 +481,7 @@ class TasksController extends TasksAppController {
             				$taskLabel .= ' : ' . $dueTask[$dueTask['Task']['model']]['displayName'];
             			}            			
 						$digestMessage .= '<a href="'. Router::url(array('controller'=>'tasks', 'plugin'=>'tasks', 'action'=>'view', $dueTask['Task']['id']), true) . '">' . $taskLabel . '</a> : ' . date('M d, \'y', strtotime($dueTask['Task']['due_date'])) . "<br/ >\n";
-						$digestMessage .= $dueTask['Task']['description'];
+						$digestMessage .= $this->Text->truncate($dueTask['Task']['description']);
 						$digestMessage .= '</li>'."\n";
             		}
             		$digestMessage .= '</ul>' . "\n";
@@ -502,7 +511,7 @@ class TasksController extends TasksAppController {
 						$taskLabel .= ' : ' . $dueTask['Project']['displayName'];
 					}            			
 					$digestMessage .= '<a href="'. Router::url(array('controller'=>'tasks', 'plugin'=>'tasks', 'action'=>'view', $dueTask['Task']['id']), true) . '">' . $taskLabel . '</a> : ' . date('M d, \'y', strtotime($dueTask['Task']['due_date'])) . "<br/ >\n";
-					$digestMessage .= $dueTask['Task']['description'];
+					$digestMessage .= $this->Text->truncate($dueTask['Task']['description']);
 					$digestMessage .= '</li>'."\n";
 				}
 				$digestMessage .= '</ul>';
