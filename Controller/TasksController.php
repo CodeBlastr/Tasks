@@ -492,7 +492,7 @@ class TasksController extends TasksAppController {
             
             //if($assigneeDetails['Assignee']['email']!='php.arvind@gmail.com') continue;
             
-            $this->__sendMail($assigneeDetails['Assignee']['email'], 'Daily Task Digest', $digestMessage, $template = 'default');
+            $this->__sendMail($assigneeDetails['Assignee']['email'], $assigneeDetails['Assignee']['full_name'] . '\'s Daily Task Digest', $digestMessage, $template = 'default');
             
             $this->NotificatonMsg .= 'Subject: <strong>Daily Task Digest</strong>, To: <strong>'.$assigneeDetails['Assignee']['email'].'</strong>, Message: <br />'. $digestMessage . '<br /><hr><br />';
         }
