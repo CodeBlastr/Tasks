@@ -324,6 +324,11 @@ class TasksController extends TasksAppController {
     function __cron($options=array()) {
     	ClassRegistry::init("Tasks.Task");
     	
+    	//$this->Task->query("updated tasks set last_notified_date=null");exit;    	
+    	
+    	/*$options['skip_digest']=false;
+    	$options['skip_single']=false;
+    	
     	if(isset($options['tn_skip']))	{
     		$skipped = explode(',', $options['tn_skip']);
     		
@@ -334,7 +339,7 @@ class TasksController extends TasksAppController {
     		if(in_array('single', $skipped))	{
     			$options['skip_single']=true;
     		}
-    	}
+    	}*/
     	
     	if(isset($options['assignee_id']) && !(int)$options['assignee_id'])	{
     		unset($options['assignee_id']);
@@ -342,28 +347,27 @@ class TasksController extends TasksAppController {
     	
     	$options['tn_skip_update'] = false;
     	
-    	if(!isset($options['skip_single'])) {
+    	//if(!$options['skip_single']) {
     		
-    		if(!isset($options['skip_digest']))	{
+    		/*if(!$options['skip_digest']))	{
     			$options['tn_skip_update'] = true;
-    		}    		
+    		}*/		
     		
     		$this->overdue_notify($options);
     		
-    		$options['tn_skip_update'] = false;
+    		//$options['tn_skip_update'] = false;
     		
     		//after the overdue single notifications has been send make it to repeat for same day for the Digest
     		//if(!isset($options['skip_digest']))	{
     		//	$options['tn_repeatx'] = true;
     		//}
-       	}
+       	//}
      	
-        if(!isset($options['skip_digest'])) {        	
+        //if(!isset($options['skip_digest'])) {        	
         	$this->daily_digest($options);
-        }
+        //}
         
-        echo "Run at " . date("d-m-Y h:i:s");
-        return;
+        echo $this->NotificatonMsg;
     }
 
 	/** 
@@ -407,7 +411,6 @@ class TasksController extends TasksAppController {
         	));
         
         unset($conditions['Task.assignee_id <>']);  
-        Configure::write('debug', 2);
         
         $creators = array();$creatorMessages = array();
 
@@ -452,10 +455,10 @@ class TasksController extends TasksAppController {
 					$creatorMessages[$task['Creator']['id']]['Coming Soon'][] = $eachMessage;
                 }
                 
-                if(!$options['tn_skip_update'])	{
+                //if($options['skip_single'])	{
 					$this->Task->id = $task['Task']['id'];
 					$this->Task->saveField('last_notified_date', date('Y-m-d'));
-				}
+				//}
             }
             
             foreach($msgArray as $title=>$dueTasks)	{
@@ -481,9 +484,9 @@ class TasksController extends TasksAppController {
             //if($assigneeDetails['Assignee']['email']!='php.arvind@gmail.com') continue;
             
             $this->__sendMail($assigneeDetails['Assignee']['email'], 'Daily Task Digest', $digestMessage, $template = 'default');
+            
+            $this->NotificatonMsg .= 'Subject: <strong>Daily Task Digest</strong>, To: <strong>'.$assigneeDetails['Assignee']['email'].'</strong>, Message: <br />'. $digestMessage . '<br /><hr><br />';
         }
-        
-        //return;
 
 		foreach($creatorMessages as $creator_id=>$messages)	{
 		
@@ -512,6 +515,7 @@ class TasksController extends TasksAppController {
 				 //if($creators[$creator_id]['email']!='php.arvind@gmail.com') continue;
 				 
 				$this->__sendMail($creators[$creator_id]['email'],  $subject, $digestMessage, $template = 'default');
+				$this->NotificatonMsg .= 'Subject: <strong>'.$subject.'</strong>, To: <strong>'.$creators[$creator_id]['email'].'</strong>, Message: <br />'. $digestMessage . '<br /><hr><br />';
 				break;
 			}
 		}
@@ -573,11 +577,13 @@ class TasksController extends TasksAppController {
             //if($task['Assignee']['email']!='php.arvind@gmail.com') continue;
 
             $this->__sendMail(array($task['Assignee']['email'], $task['Creator']['email']) , $subject, $message, $template = 'default');
+            
+            $this->NotificatonMsg .= 'Subject: <strong>'.$subject.'</strong>, To: <strong>'.$task['Assignee']['email'].', '.$task['Creator']['email'].'</strong>, Message: <br />'. $message . '<br /><hr><br />';
            
-            if(!$options['tn_skip_update'])	{
+            /*if($options['skip_digest'])	{ //if it's only run for this particular task update
 				$this->Task->id = $task['Task']['id'];
 				$this->Task->saveField('last_notified_date', date('Y-m-d'));
-            }
+            }*/
         }
     }
 	
@@ -617,6 +623,7 @@ class TasksController extends TasksAppController {
 	function __findAssociated($curr_model, $data=array())	{
 		$this->autoRender=false;
 		if(!isset($data[$curr_model]['model']) || !isset($data[$curr_model]['foreign_key'])) return false;
+		if(!$data[$curr_model]['model']) return false;
 		$plugin = pluginize($data[$curr_model]['model']);
 		$model = $data[$curr_model]['model'];
 		$init = !empty($plugin) ? $plugin . '.' . $model : $model;
