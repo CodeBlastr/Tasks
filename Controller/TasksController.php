@@ -446,7 +446,7 @@ class TasksController extends TasksAppController {
             	
             	$associated = ($associated) ? $associated : array();
             	
-            	$creators[$task['Creator']['id']] = array('full_name'=>$task['Creator']['full_name'], 'email'=>$task['Creator']['email'], 'assignee_name'=>$assigneeDetails['Assignee']['full_name']);
+            	$creators[$task['Creator']['id']] = array('full_name'=>$task['Creator']['full_name'], 'email'=>$task['Creator']['email']);
 
             	$eachMessage = array_merge($task, $associated);
             	
@@ -517,7 +517,7 @@ class TasksController extends TasksAppController {
 				$digestMessage .= '</ul>';
 			}
 			
-			$subject = $creators[$creator_id]['assignee_name'] ."'s Task Digest for ".date("m/d/Y");
+			$subject = $creators[$creator_id]['full_name'] ."'s Task Digest for ".date("m/d/Y");
 			
 			if($digestMessage!="")	{
 				
