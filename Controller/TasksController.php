@@ -421,9 +421,11 @@ class TasksController extends TasksAppController {
         
         unset($conditions['Task.assignee_id <>']);  
         
-        $creators = array();$creatorMessages = array();
+        $creatorMessages = array();
 
         foreach($allAssignees as $assignee) {
+        	
+        	$creators = array();
 
             $assigneeDetails = $this->Task->Assignee->find('first', array('conditions'=>array('Assignee.id'=>$assignee['Task']['assignee_id']), 'fields'=>array('id', 'full_name', 'email')));
             $conditions['Task.assignee_id'] = $assignee['Task']['assignee_id'];            
@@ -452,16 +454,16 @@ class TasksController extends TasksAppController {
             	
                 if(strtotime($task['Task']['due_date']) < strtotime(date('Y-m-d')))    {                	
                 	$msgArray['Over Due'][] = $eachMessage;
-                	$creatorMessages[$task['Creator']['id']]['Over Due'][] = $eachMessage;
+                	//$creatorMessages[$task['Creator']['id']]['Over Due'][] = $eachMessage;
                 }	elseif(strtotime($task['Task']['due_date']) == strtotime(date('Y-m-d')))	{
                 	$msgArray['Due Today'][] = $eachMessage;					
-					$creatorMessages[$task['Creator']['id']]['Due Today'][] = $eachMessage;					
+					//$creatorMessages[$task['Creator']['id']]['Due Today'][] = $eachMessage;					
                 }	elseif (strtotime($task['Task']['due_date']) <= strtotime(date('Y-m-d') . ' add +7 day'))	{
                     $msgArray['Due This Week'][] = $eachMessage;					
-					$creatorMessages[$task['Creator']['id']]['Due This Week'][] = $eachMessage;
+					//$creatorMessages[$task['Creator']['id']]['Due This Week'][] = $eachMessage;
                 }	else{
                 	$msgArray['Coming Soon'][] = $eachMessage;					
-					$creatorMessages[$task['Creator']['id']]['Coming Soon'][] = $eachMessage;
+					//$creatorMessages[$task['Creator']['id']]['Coming Soon'][] = $eachMessage;
                 }
                 
                 //if($options['skip_single'])	{
@@ -488,15 +490,20 @@ class TasksController extends TasksAppController {
             	}
             }
             
-            //debug($assigneeDetails['Assignee']['email']);
-            
-            //if($assigneeDetails['Assignee']['email']!='php.arvind@gmail.com') continue;
-            
+            //debug($assigneeDetails['Assignee']['email']);            
+            //if($assigneeDetails['Assignee']['email']!='php.arvind@gmail.com') continue;            
             $this->__sendMail($assigneeDetails['Assignee']['email'], $assigneeDetails['Assignee']['full_name'] . '\'s Daily Task Digest', $digestMessage, $template = 'default');
+            
+            foreach($creators as $creator)	{
+            	$this->__sendMail($creator['email'], $assigneeDetails['Assignee']['full_name'] . '\'s Daily Task Digest', $digestMessage, $template = 'default');
+            }
             
             $this->NotificatonMsg .= 'Subject: <strong>Daily Task Digest</strong>, To: <strong>'.$assigneeDetails['Assignee']['email'].'</strong>, Message: <br />'. $digestMessage . '<br /><hr><br />';
         }
-
+        
+        //creator's custom personal digest which contained tasks asssigned by creators only. commented
+        
+        /*
 		foreach($creatorMessages as $creator_id=>$messages)	{
 		
 			$digestMessage = '';
@@ -527,7 +534,7 @@ class TasksController extends TasksAppController {
 				$this->NotificatonMsg .= 'Subject: <strong>'.$subject.'</strong>, To: <strong>'.$creators[$creator_id]['email'].'</strong>, Message: <br />'. $digestMessage . '<br /><hr><br />';
 				break;
 			}
-		}
+		}*/
     }
 
 	/** 
