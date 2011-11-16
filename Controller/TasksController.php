@@ -358,7 +358,7 @@ class TasksController extends TasksAppController {
     			$options['tn_skip_update'] = true;
     		}*/		
     		
-    		$this->overdue_notify($options);
+    		$this->_overdue_notify($options);
     		
     		//$options['tn_skip_update'] = false;
     		
@@ -369,7 +369,7 @@ class TasksController extends TasksAppController {
        	//}
      	
         //if(!isset($options['skip_digest'])) {        	
-        	$this->daily_digest($options);
+        	$this->_daily_digest($options);
         //}
         
         echo $this->NotificatonMsg;
@@ -379,7 +379,7 @@ class TasksController extends TasksAppController {
 	 * send email notifications for incomplete and overdue tasks
 	 */
 
-    function daily_digest($options=array()) {
+    function _daily_digest($options=array()) {
     	
     	App::import('Helper', 'Text');
 		App::uses('View', 'View');
@@ -541,7 +541,7 @@ class TasksController extends TasksAppController {
 	 * send email notifications for overdue tasks
 	 */
 
-    function overdue_notify($options=array())   {
+    function _overdue_notify($options=array())   {
 
         $this->autoRender=false;
         $this->Task->recursive = 0;
