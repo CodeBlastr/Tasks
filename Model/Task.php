@@ -30,6 +30,13 @@ class Task extends TasksAppModel {
 			'fields' => '',
 			'order' => ''
 			),
+		'Project' => array(
+			'className' => 'Projects.Project',
+			'foreignKey' => 'foreign_key',
+			'conditions' => '',
+			'fields' => '',
+			'order' => ''
+			),
 		);
 	
 	var $hasMany = array(
