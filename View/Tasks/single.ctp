@@ -4,17 +4,16 @@
       <div class="viewRow">
         <ul class="metaData">
           <li><span class="metaDataLabel">
-            <?php echo __('Title : '); ?>
             </span><span class="metaDataDetail"><?php echo $task['Task']['name']; ?></span></li>
           <li><span class="metaDataLabel">
-            <?php echo $model.' : '; ?>
+            <?php echo __(' for '); ?>
             </span><span class="metaDataDetail"><?php echo $this->Html->link(strip_tags($task['Associated'][$model][$modelDisplayField]), array('plugin' => strtolower(pluginize($model)), 'controller' => Inflector::tableize($model), 'action' => 'view', $foreignKey), array('escape' => false)); ?></span></li>
           <li><span class="metaDataLabel">
-            <?php echo __('Due : '); ?>
-            </span><span class="metaDataDetail"><?php echo date('M d, y', strtotime($task['Task']['due_date'])); ?></span></li>
+            <?php echo __(' before '); ?>
+            </span><span class="metaDataDetail"><?php echo date('M d, Y', strtotime($task['Task']['due_date'])); ?></span></li>
         </ul>
 		<div class="recordData">
-			<div class="truncate"><?php echo $task['Task']['description']; ?></div>
+			<?php echo $task['Task']['description']; ?>
 		</div>
       </div>
     </div>
