@@ -9,7 +9,7 @@ class TasksController extends TasksAppController {
 	
 	function beforeFilter() {
 		parent::beforeFilter();
-		$this->passedArgs['comment_view_type'] = 'threaded';
+		$this->passedArgs['comment_view_type'] = 'flat';
 	}
 	
 	/*
