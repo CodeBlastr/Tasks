@@ -32,7 +32,6 @@ class TasksController extends TasksAppController {
 	}
 	
 	function index() {
-		$this->Task->recursive = 0;	
 		$this->paginate = array(
 			'conditions' => array(
 				'Task.parent_id NOT' => null,
@@ -42,8 +41,15 @@ class TasksController extends TasksAppController {
 				'Task.order',
 				'Task.due_date',
 				),
+			'contain' => array(
+				'Assignee',
+				),
 			);
-		$this->set('tasks', $this->paginate());
+		$tasks = $this->paginate();
+		$projectIds = Set::extract('/Task/foreign_key', $tasks);
+		$projects = $this->Task->Project->find('all', array('conditions' => array('Project.id' => $projectIds)));
+		$projects = Set::combine($projects, '{n}.Project.id', '{n}.Project.displayName');
+		$this->set(compact('tasks', 'projects'));
 		$this->set('page_title_for_layout', 'All Tasks');
 	}
 
@@ -189,8 +195,12 @@ class TasksController extends TasksAppController {
 				array('Task.is_completed' => null),
 			);
 		}
-		$this->paginate = array('conditions' => $conditions, 'order' => array('Task.order' => 'asc'));
-		$this->set('tasks', $this->paginate('Task'));
+		$this->paginate = array('conditions' => $conditions, 'order' => array('Task.order' => 'asc', 'Task.due_date' => 'asc'));
+		$tasks = $this->paginate('Task');
+		$projectIds = Set::extract('/Task/foreign_key', $tasks);
+		$projects = $this->Task->Project->find('all', array('conditions' => array('Project.id' => $projectIds)));
+		$projects = Set::combine($projects, '{n}.Project.id', '{n}.Project.displayName');
+		$this->set(compact('tasks', 'projects'));
 		$this->set('page_title_for_layout', 'My '.($this->request->params['named']['completed'] == 1 ? 'Completed' : 'Incomplete').' Tasks');
 	}
 		

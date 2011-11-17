@@ -16,7 +16,7 @@ foreach ($tasks as $task):
 ?>
 	<tr<?php echo $class;?> id="<?php echo $task['Task']['id']; ?>">
 		<td>
-			<?php echo '<span class="taskType '.strtolower($task['Task']['model']).'">'.$task['Task']['model'].'</span> : '; echo $this->Html->link(__($task['Task']['name'], true), array('action' => 'view', $task['Task']['id'])); ?>
+			<?php echo $this->Html->link($projects[$task['Task']['foreign_key']] . ' : ' . $task['Task']['name'], array('action' => 'view', $task['Task']['id']), array('escape' => false)); ?>
 		</td>
 		<td>
 			<?php echo $this->Time->format('D, M j', $task['Task']['due_date']); ?>

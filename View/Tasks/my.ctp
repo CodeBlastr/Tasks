@@ -22,10 +22,10 @@ foreach ($tasks as $task):
 			<?php echo $task['Task']['order']; ?>
 		</td>
 		<td>
-			<?php echo '<span class="taskType '.strtolower($task['Task']['model']).'">'.$task['Task']['model'].'</span> : '; echo $this->Html->link(__($task['Task']['name'], true), array('action' => 'view', $task['Task']['id'])); ?>
+			<?php echo $this->Html->link($projects[$task['Task']['foreign_key']] . ' : ' . $task['Task']['name'], array('action' => 'view', $task['Task']['id']), array('escape' => false)); ?>
 		</td>
 		<td>
-			<?php echo $this->Time->nice($task['Task']['due_date']); ?>
+			<?php echo $this->Time->format('M d, Y', $task['Task']['due_date']); ?>
 		</td>
 		<td class="actions">
 			<?php echo $this->Html->link(__('Edit', true), array('action' => 'edit', $task['Task']['id'])); ?>
