@@ -39,26 +39,3 @@ echo $this->Element('context_menu', array('menus' => array(
 		)
 	)));
 ?>
-  
-
-<script type="text/javascript">
-$(function() {
-	$(".indexRow").parent().sortable({
-		delay: 300,
-		update: function(event, ui) {
-			$('#loadingimg').show();
-		 	var taskOrder = $(this).sortable('toArray').toString().replace(/row/g, '');
-			$.post('/tasks/tasks/sort_order.json', {taskOrder:taskOrder}, 
-				   function(data){
-					  	var n = 1;
-						$.each(data, function(i, item) {
-							$('row.'+item).html(n);
-							n++;
-						});	
-						$('#loadingimg').hide()
-				   }
-			);
-		}
-	});
-});
-</script>
