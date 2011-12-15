@@ -1,9 +1,10 @@
 <?php
 class TasksController extends TasksAppController { 
 
-	var $name = 'Tasks';
-	var $components = array('Comments.Comments' => array('userModelClass' => 'Users.User'));
-	var $allowedActions = array('desktop_index', 'desktop_view');
+	public $name = 'Tasks';
+	public $uses = 'Tasks.Task';
+	public $components = array('Comments.Comments' => array('userModelClass' => 'Users.User'));
+	public $allowedActions = array('desktop_index', 'desktop_view');
 	
 	public $Text;
 	
