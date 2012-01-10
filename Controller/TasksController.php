@@ -20,11 +20,11 @@ class TasksController extends TasksAppController {
 	function gadget(){
 		$this->layout = 'gadget';
 		
-		$contactTypes = enum('CONTACTTYPE');
-		$contactSources = enum('CONTACTSOURCE');
-		$contactIndustries = enum('CONTACTINDUSTRY');
-		$contactRatings = enum('CONTACTRATING');
-		$contactDetailTypes = enum('CONTACTDETAIL');
+		$contactTypes = Zuha::enum('CONTACTTYPE');
+		$contactSources = Zuha::enum('CONTACTSOURCE');
+		$contactIndustries = Zuha::enum('CONTACTINDUSTRY');
+		$contactRatings = Zuha::enum('CONTACTRATING');
+		$contactDetailTypes = Zuha::enum('CONTACTDETAIL');
 		
 		$parents = $this->Task->ParentTask->find('list');
 		$assignees = $this->Task->Assignee->find('list');
@@ -651,7 +651,7 @@ class TasksController extends TasksAppController {
 		$this->autoRender=false;
 		if(!isset($data[$curr_model]['model']) || !isset($data[$curr_model]['foreign_key'])) return false;
 		if(!$data[$curr_model]['model']) return false;
-		$plugin = pluginize($data[$curr_model]['model']);
+		$plugin = ZuhaInflector::pluginize($data[$curr_model]['model']);
 		$model = $data[$curr_model]['model'];
 		$init = !empty($plugin) ? $plugin . '.' . $model : $model;
 		$foreignKey = $data[$curr_model]['foreign_key'];
