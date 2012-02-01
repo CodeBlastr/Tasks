@@ -22,7 +22,7 @@ foreach ($tasks as $task):
 			<?php echo $this->Time->format('D, M j', $task['Task']['due_date']); ?>
 		</td>
 		<td>
-			<?php echo $this->Html->link($task['Assignee']['username'], array('controller' => 'users', 'action' => 'view', $task['Assignee']['id'])); ?>
+			<?php echo $this->Html->link($task['Assignee']['username'], array('plugin' => 'tasks', 'controller' => 'tasks', 'action' => 'index', 'filter' => 'assignee:' . $task['Assignee']['id'])); ?>
 		</td>
 		<td class="actions">
 			<?php echo $this->Html->link(__('Edit', true), array('action' => 'edit', $task['Task']['id'])); ?>
