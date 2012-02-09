@@ -39,6 +39,17 @@ class Task extends TasksAppModel {
 			),
 		);
 	
+	public $hasOne = array(
+		'Gallery' => array(
+			'className' => 'Galleries.Gallery',
+			'foreignKey' => 'foreign_key',
+			'dependent' => false,
+			'conditions' => array('Gallery.model' => 'Task'),
+			'fields' => '',
+			'order' => ''
+			),
+		);	
+		
 	public $hasMany = array(
 		'ChildTask' => array(
 			'className' => 'Tasks.Task',
@@ -63,13 +74,33 @@ class Task extends TasksAppModel {
 	
 	public function add($data) {
 		$data = $this->cleanData($data);
-		if ($this->save($data)) : 
+		
+		if ($this->save($data)) :
+			$this->galleryData($data);
 			return true;
 		else : 
 			return false;
 		endif;
 	}
 	
+	/*
+	 * galleryData saves the gallery if there is GalleryImage data present 
+	 * return True/False
+	 */
+	public function galleryData($data) {
+		$data['Gallery']['model'] = $this->name;
+		$data['Gallery']['foreign_key'] = $this->id;
+
+		// check if GalleryImage data is in data 
+		if (isset($data['GalleryImage'])){
+			if ($data['GalleryImage']['filename']['error'] == 0 
+					&& $this->Gallery->GalleryImage->add($data, 'filename')) {
+				return true;
+			} else {
+				return false;
+			}
+		} 
+	}
 	
 	public function complete($data) {
 		$data['Task']['is_completed'] = 1;

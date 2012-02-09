@@ -61,32 +61,36 @@ class TasksController extends TasksAppController {
 			$this->Session->setFlash($e->getMessage());
 			$this->redirect(array('action' => 'index'));
 		}	
-		
 	
 		if (!empty($task['Task']['parent_id'])) : 
 			$this->_single($task);
 		else : 
 			$this->set('task', $task);
+			
 			$this->paginate = array(
 				'conditions' => array(
-					'ChildTask.parent_id' => $id,
+					'Task.parent_id' => $id,
 					),
 				'fields' => array(
-					'id',
-					'due_date',
-					'assignee_id',
-					'name',
+					'Task.id',
+					'Task.due_date',
+					'Task.assignee_id',
+					'Task.name',
 					),
 				'order' => array(
-					'ChildTask.order',
-					'ChildTask.due_date',
+					'Task.order',
+					'Task.due_date',
 					),
 				);
-			$this->set('childTasks', $this->paginate('ChildTask'));
+				
+			$this->set('childTasks', $this->paginate('Task'));		
 			$this->set('parentId', $id);
+			$this->set('showGallery', true);
+			$this->set('galleryModel', array('name' => 'Task', 'alias'=>'Task'));
+			$this->set('galleryForeignKey', 'id');
 			$this->set('model', $task['Task']['model']);
 			$this->set('foreignKey', $task['Task']['foreign_key']);
-			$this->set('modelName', 'ChildTask');
+			$this->set('modelName', 'Task');
 			$this->set('pluginName', 'tasks');
 			$this->set('displayName', 'name');
 			$this->set('displayDescription', '');
@@ -204,8 +208,34 @@ class TasksController extends TasksAppController {
 		$this->set(compact('tasks', 'projects'));
 		$this->set('page_title_for_layout', 'My '.($this->request->params['named']['completed'] == 1 ? 'Completed' : 'Incomplete').' Tasks');
 	}
+
+	/*
+	 * function my_list is used to get list of parent tasks of logged in user
+	 */
+	function my_lists() {
+		# declare variable in case of non-use
+		if (!isset($this->request->params['named']['completed'])) { $this->request->params['named']['completed'] = ''; }
 		
-		
+		$conditions['Task.assignee_id'] = $this->Session->read('Auth.User.id');
+		$conditions['Task.parent_id'] = '';		
+		if (!empty($this->request->params['named']['completed']) && $this->request->params['named']['completed'] == 1){
+			$conditions['Task.is_completed'] = 1;
+		} else {
+			$conditions['OR'] = array(
+				array('Task.is_completed' => 0),
+				array('Task.is_completed' => null),
+			);
+		}
+		$this->paginate = array('conditions' => $conditions, 'order' => array('Task.order' => 'asc', 'Task.due_date' => 'asc'));
+		$tasks = $this->paginate('Task');
+		$projectIds = Set::extract('/Task/foreign_key', $tasks);
+		$projects = $this->Task->Project->find('all', array('conditions' => array('Project.id' => $projectIds)));
+		$projects = Set::combine($projects, '{n}.Project.id', '{n}.Project.displayName');
+		$this->set(compact('tasks', 'projects'));
+		$this->set('page_title_for_layout', 'My '.($this->request->params['named']['completed'] == 1 ? 'Completed' : 'Incomplete').' Tasks');
+		$this->render('my');
+	}
+	
 	function sort_order() {
 		$taskOrders = explode(',', $_POST['taskOrder']);
 		foreach ($taskOrders as $key => $value) {

@@ -1,6 +1,7 @@
 <div class="tasks index">
 <table cellpadding="0" cellspacing="0">
 	<tr>
+		<th>Gallery Image</th>
 		<th><?php echo $this->Paginator->sort('name');?></th>
 		<th><?php echo $this->Paginator->sort('due_date');?></th>
 		<th><?php echo $this->Paginator->sort('assignee_id');?></th>
@@ -15,6 +16,12 @@ foreach ($tasks as $task):
 	}
 ?>
 	<tr<?php echo $class;?> id="<?php echo $task['Task']['id']; ?>">
+		<td>
+		<?php echo $this->Element('thumb', array('model' => 'Task', 'foreignKey' => $task['Task']['id'], 
+														'showDefault' => 'false', 'thumbSize' => 'small', 
+															'thumbLink' => array('plugin' => 'galleries', 'controller' => 'galleries', 'action' => 'view', 'Task', $task['Task']['id'])), 
+												array('plugin' => 'galleries')); ?>
+		</td>
 		<td>
 			<?php echo $this->Html->link($projects[$task['Task']['foreign_key']] . ' : ' . $task['Task']['name'], array('action' => 'view', $task['Task']['id']), array('escape' => false)); ?>
 		</td>
