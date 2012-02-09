@@ -1,14 +1,14 @@
 <?php
 class Task extends TasksAppModel {
 
-	var $name = 'Task';
-	var $actsAs = array('Tree');
-	var $validate = array(
+	public $name = 'Task';
+	public $actsAs = array('Tree');
+	public $validate = array(
 		'name' => array('notempty'),
 	); 
 	
 	//The Associations below have been created with all possible keys, those that are not needed can be removed
-	var $belongsTo = array(
+	public $belongsTo = array(
 		'ParentTask' => array(
 			'className' => 'Tasks.Task',
 			'foreignKey' => 'parent_id',
@@ -39,7 +39,7 @@ class Task extends TasksAppModel {
 			),
 		);
 	
-	var $hasMany = array(
+	public $hasMany = array(
 		'ChildTask' => array(
 			'className' => 'Tasks.Task',
 			'foreignKey' => 'parent_id',
@@ -61,7 +61,7 @@ class Task extends TasksAppModel {
 		$this->displayField = 'displayName';
     }*/
 	
-	function add($data) {
+	public function add($data) {
 		$data = $this->cleanData($data);
 		if ($this->save($data)) : 
 			return true;
@@ -71,7 +71,7 @@ class Task extends TasksAppModel {
 	}
 	
 	
-	function complete($data) {
+	public function complete($data) {
 		$data['Task']['is_completed'] = 1;
 		$data['Task']['completed_date'] = date('Y-m-d h:i:s');
 		if($this->save($data)) : 
@@ -82,7 +82,7 @@ class Task extends TasksAppModel {
 	}
 	
 	
-	function incomplete($data) {
+	public function incomplete($data) {
 		$data['Task']['is_completed'] = 0;
 		if($this->save($data)) : 
 			return true;
@@ -91,7 +91,7 @@ class Task extends TasksAppModel {
 		endif;
 	}
 	
-	function cleanData($data) {
+	public function cleanData($data) {
 		if (empty($data['Task']['name']) && !empty($data['Task']['description'])) :
 			$data['Task']['name'] = $data['Task']['description'];
 		endif;
@@ -100,7 +100,7 @@ class Task extends TasksAppModel {
 	}
 	
 	
-	function view($id = null, $params = null) {
+	public function view($id = null, $params = null) {
 		$task = $this->find('first', array(
 			'conditions' => array(
 				'or' => array(
