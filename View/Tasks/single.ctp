@@ -3,15 +3,7 @@
     <div id="n1" class="info-block">
       <div class="viewRow">
         <ul class="metaData">
-        <li><span class="metaDataImage">
-            </span><span class="metaDataImage">
-            <?php echo $this->Element('thumb', array('model' => 'Task', 'foreignKey' => $task['Task']['id'], 
-													'showDefault' => 'false', 'thumbHeight' => 130, 
-														'thumbWidth' => 209, 'thumbSize' => 'medium', 
-														'thumbLink' => array('plugin' => 'galleries', 'controller' => 'galleries', 'action' => 'view', 'Task', $task['Task']['id'])), 
-											array('plugin' => 'galleries')); ?>
-            </span></li>	
-          <li><span class="metaDataLabel">
+         <li><span class="metaDataLabel">
             </span><span class="metaDataDetail"><?php echo $task['Task']['name']; ?></span></li>
           <li><span class="metaDataLabel">
             <?php echo __(' for '); ?>
