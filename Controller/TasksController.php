@@ -190,7 +190,7 @@ class TasksController extends TasksAppController {
 				endforeach; else :
 					$this->Session->setFlash(__('The Task List has been saved', true));
 				endif;
-				$this->redirect(array('action' => 'my'), 'success');
+				$this->redirect(array('action' => 'my_lists'), 'success');
 			} else {
 				$this->Session->setFlash(__('The Task could not be saved. Please, try again.', true), 'error');
 			}
@@ -294,26 +294,53 @@ class TasksController extends TasksAppController {
  * function my_list is used to get list of parent tasks of logged in user
  */
 	public function my_lists() {
-		# declare variable in case of non-use
-		if (!isset($this->request->params['named']['completed'])) { $this->request->params['named']['completed'] = ''; }
 		
-		$conditions['Task.assignee_id'] = $this->Session->read('Auth.User.id');
-		$conditions['Task.parent_id'] = '';		
-		if (!empty($this->request->params['named']['completed']) && $this->request->params['named']['completed'] == 1){
-			$conditions['Task.is_completed'] = 1;
-		} else {
-			$conditions['OR'] = array(
-				array('Task.is_completed' => 0),
-				array('Task.is_completed' => null),
-			);
+		if (empty($this->request->params['named']['filter'])) {
+			$this->redirect(array('filter' => 'completed:0'));
 		}
-		$this->paginate = array('conditions' => $conditions, 'order' => array('Task.order' => 'asc', 'Task.due_date' => 'asc'));
-		$tasks = $this->paginate('Task');
-		$projectIds = Set::extract('/Task/foreign_key', $tasks);
-		$projects = $this->Task->Project->find('all', array('conditions' => array('Project.id' => $projectIds)));
-		$projects = Set::combine($projects, '{n}.Project.id', '{n}.Project.displayName');
-		$this->set(compact('tasks', 'projects'));
-		$this->set('page_title_for_layout', 'My '.($this->request->params['named']['completed'] == 1 ? 'Completed' : 'Incomplete').' Tasks');
+		
+		$this->paginate['conditions']['Task.assignee_id'] = $this->Session->read('Auth.User.id');
+		$this->paginate['conditions']['Task.parent_id'] = null;
+		$this->paginate['order']['Task.order'] = 'asc';
+		$this->paginate['order']['Task.due_date'] = 'asc';
+		
+	
+		$rawtasks = $this->paginate('Task');
+		
+		// start the related model functions
+		$related = Set::combine($rawtasks, '{n}.Task.id', '{n}.Task.foreign_key', '{n}.Task.model');
+		
+		foreach($related as $model => $foreignKeys) {
+			if (!empty($model)) {
+				App::uses($model, ZuhaInflector::pluginize($model). '.Model');
+				$Related = new $model;
+				$displayField = $Related->displayField;
+				$associated = $Related->find('all', array(
+					'conditions' => array(
+						"{$model}.id" => $foreignKeys, 
+						),
+					'fields' => array(
+						'id',
+						$displayField,
+						),
+					));
+				$assoc[$model] = Set::combine($associated, "{n}.{$model}.id", "{n}.{$model}.{$displayField}");
+			}
+		}
+		$i = 0;
+		foreach ($rawtasks as $task) {
+			$tasks[$i] = $task;
+			if(!empty($assoc[$task['Task']['model']][$task['Task']['foreign_key']])) {
+				$tasks[$i]['Task']['name'] = $task['Task']['name'] . ' <span class="taskAssociate">' . $assoc[$task['Task']['model']][$task['Task']['foreign_key']] . '</span>';
+			}
+			$i++;
+		}
+		// end the related model functions
+		
+		$this->set(compact('tasks'));
+		
+		$this->set('page_title_for_layout', 'My '.($this->request->params['named']['filter']['completed'] == 1 ? 'Completed' : 'Incomplete').' Tasks');
+		
 		$this->render('my');
 	}
 	
