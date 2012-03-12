@@ -66,27 +66,25 @@ class Task extends TasksAppModel {
 			),
 		);
 	
-	/*function __construct($id = false, $table = null, $ds = null) {
-    	parent::__construct($id, $table, $ds);
-	    $this->virtualFields['displayName'] = sprintf('CONCAT(%s.name, " ", %s.description)', $this->alias, $this->alias);
-		$this->displayField = 'displayName';
-    }*/
-	
+/**
+ * add a task
+ */
 	public function add($data) {
 		$data = $this->cleanData($data);
 		
-		if ($this->save($data)) :
+		if ($this->save($data)) {
 			$this->galleryData($data);
 			return true;
-		else : 
+		} else {
 			return false;
-		endif;
+		}
 	}
 	
-	/*
-	 * galleryData saves the gallery if there is GalleryImage data present 
-	 * return True/False
-	 */
+/**
+ * galleryData saves the gallery if there is GalleryImage data present 
+ *
+ * return bool
+ */
 	public function galleryData($data) {
 		$data['Gallery']['model'] = $this->name;
 		$data['Gallery']['foreign_key'] = $this->id;
@@ -102,35 +100,94 @@ class Task extends TasksAppModel {
 		} 
 	}
 	
-	public function complete($data) {
-		$data['Task']['is_completed'] = 1;
-		$data['Task']['completed_date'] = date('Y-m-d h:i:s');
-		if($this->save($data)) : 
+	
+/**
+ * Set a task as complete
+ *
+ * return bool
+ */
+	public function complete($data) {		
+		if($this->saveAll($this->_isParentComplete($data, 'complete'))) {
 			return true;
-		else :
-			return false;
-		endif;
+		} else {
+			throw new Exception(__d('tasks', 'Task could not be marked complete.', true));
+		}
 	}
 	
-	
-	public function incomplete($data) {
-		$data['Task']['is_completed'] = 0;
-		if($this->save($data)) : 
-			return true;
-		else :
-			return false;
-		endif;
-	}
-	
-	public function cleanData($data) {
-		if (empty($data['Task']['name']) && !empty($data['Task']['description'])) :
-			$data['Task']['name'] = $data['Task']['description'];
-		endif;
+/**
+ * Set parent task list completion status
+ *
+ * @return array
+ */
+	protected function _isParentComplete($data = null, $status = 'incomplete') {
+		if (!empty($data['Task']['id'])) {
+			$task = $this->find('first', array(
+				'conditions' => array(
+					'Task.id' => $data['Task']['id'],
+					), 
+				'contain' => 'ParentTask',
+				));
+			if (!empty($task['ParentTask']['id'])) {
+				$incompleteChildren = $this->find('count', array(
+					'conditions' => array(
+						'Task.parent_id' => $task['ParentTask']['id'], 
+						'Task.is_completed' => 0,
+						'Task.id !=' => $task['Task']['id'], 
+						),
+					));
+				// if all children are complete mark parent as complete
+				if (!empty($incompleteChildren)) {
+					$task['ParentTask']['is_completed'] = 0;
+					$task['ParentTask']['completed_date'] = null;
+				} else if ($status == 'complete') {
+					$task['ParentTask']['is_completed'] = 1;
+					$task['ParentTask']['completed_date'] = date('Y-m-d h:i:s');
+				} else {
+					$task['ParentTask']['is_completed'] = 0;
+					$task['ParentTask']['completed_date'] = null;
+				}
+				$data = $task;
+			}
+		}
 		
+		$data['Task']['is_completed'] = $status == 'complete' ? 1 : 0;
+		$data['Task']['completed_date'] = $status == 'complete' ? date('Y-m-d h:i:s') : null;
 		return $data;
 	}
 	
 	
+/**
+ * Mark a task as incomplete
+ *
+ * @return array
+ */
+	public function incomplete($data) {
+		if($this->saveAll($this->_isParentComplete($data, 'incomplete'))) {
+			return true;
+		} else {
+			throw new Exception(__d('tasks', 'Task could not be marked incomplete.', true));
+		}
+	}
+	
+	
+/**
+ * Standardize data
+ *
+ * @return array
+ */
+	public function cleanData($data) {
+		if (empty($data['Task']['name']) && !empty($data['Task']['description'])) {
+			$data['Task']['name'] = $data['Task']['description'];
+		}		
+		return $data;
+	}
+	
+	
+/**
+ * Return a task for the view method
+ * 
+ * @return array
+ */
 	public function view($id = null, $params = null) {
 		$task = $this->find('first', array(
 			'conditions' => array(

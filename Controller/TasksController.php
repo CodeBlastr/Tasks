@@ -8,16 +8,16 @@ class TasksController extends TasksAppController {
 	
 	public $Text;
 	
-	function beforeFilter() {
+	public function beforeFilter() {
 		parent::beforeFilter();
 		$this->passedArgs['comment_view_type'] = 'flat';
 	}
 	
-	/*
-	 * Function Gadget 
-	 * use for gmail gadget view 
-	 */
-	function gadget(){
+/**
+ * gadget method 
+ * use for gmail gadget view 
+ */
+	public function gadget(){
 		$this->layout = 'gadget';
 		
 		$contactTypes = Zuha::enum('CONTACTTYPE');
@@ -32,7 +32,10 @@ class TasksController extends TasksAppController {
 		$this->set(compact('contactDetailTypes', 'contactTypes', 'contactSources', 'contactIndustries', 'contactRatings'));
 	}
 	
-	function index() {
+/**
+ * index method
+ */
+	public function index() {
 		$this->paginate = array(
 			'conditions' => array(
 				'Task.parent_id NOT' => null,
@@ -54,7 +57,10 @@ class TasksController extends TasksAppController {
 		$this->set('page_title_for_layout', 'All Tasks');
 	}
 
-	function view($id = null) {		
+/**
+ * view method
+ */
+	public function view($id = null) {		
 		try {
 			$task = $this->Task->view($id);
 		} catch (Exception $e) {
@@ -62,28 +68,14 @@ class TasksController extends TasksAppController {
 			$this->redirect(array('action' => 'index'));
 		}	
 	
-		if (!empty($task['Task']['parent_id'])) : 
+		if (!empty($task['Task']['parent_id'])) { 
 			$this->_single($task);
-		else : 
+		} else {
 			$this->set('task', $task);
+
+			$this->set('childTasks', $this->_pendingChildTasks($task['Task']['id']));
+			$this->set('finishedChildTasks', $this->_completedChildTasks($task['Task']['id']));
 			
-			$this->paginate = array(
-				'conditions' => array(
-					'Task.parent_id' => $id,
-					),
-				'fields' => array(
-					'Task.id',
-					'Task.due_date',
-					'Task.assignee_id',
-					'Task.name',
-					),
-				'order' => array(
-					'Task.order',
-					'Task.due_date',
-					),
-				);
-				
-			$this->set('childTasks', $this->paginate('Task'));		
 			$this->set('parentId', $id);
 			$this->set('showGallery', true);
 			$this->set('galleryModel', array('name' => 'Task', 'alias'=>'Task'));
@@ -93,14 +85,78 @@ class TasksController extends TasksAppController {
 			$this->set('modelName', 'Task');
 			$this->set('pluginName', 'tasks');
 			$this->set('displayName', 'name');
-			$this->set('displayDescription', '');
-		endif;		
+			$this->set('displayDescription', 'description');
+		}		
 	}
 	
-	/** 
-	 * Display a single task instead of the task list like the view does.
-	 */
-	function _single($task) {
+	
+	protected function _pendingChildTasks($parentTaskId) {
+		unset($this->paginate);
+		$this->paginate = array(
+			'conditions' => array(
+				'Task.parent_id' => $parentTaskId,
+				'Task.is_completed' => 0,
+				),
+			'contain' => array(
+				'Assignee' => array(
+					'fields' => array(
+						'id',
+						'full_name',
+						),
+					),
+				),
+			'fields' => array(
+				'Task.id',
+				'Task.due_date',
+				'Task.assignee_id',
+				'Task.name',
+				'Task.description',
+				),
+			'order' => array(
+				'Task.order',
+				'Task.due_date',
+				),
+			);
+		return $this->paginate('Task');
+	}
+	
+	
+	protected function _completedChildTasks($parentTaskId) {
+		unset($this->paginate);
+		$this->paginate = array(
+			'conditions' => array(
+				'Task.parent_id' => $parentTaskId,
+				'Task.is_completed' => 1,
+				),
+			'contain' => array(
+				'Assignee' => array(
+					'fields' => array(
+						'id',
+						'full_name',
+						),
+					),
+				),
+			'fields' => array(
+				'Task.id',
+				'Task.due_date',
+				'Task.completed_date',
+				'Task.assignee_id',
+				'Task.name',
+				'Task.description',
+				),
+			'order' => array(
+				'Task.order',
+				'Task.due_date',
+				),
+			);
+		return $this->paginate('Task');
+	}
+
+
+/** 
+ * Display a single task instead of the task list like the view does.
+ */
+	protected function _single($task) {
 		$Model = ClassRegistry::init('Projects.Project');
 		$this->set('task', $task);
 		$this->set('model', $task['Task']['model']);
@@ -111,10 +167,10 @@ class TasksController extends TasksAppController {
 	}
 
 
-	/**
-	 * @todo	We need to support multiple people being assigned.  That might be the with usable behavior, but need some more thought put into it. 
-	 */
-	function add($model = null, $foreignKey = null, $id = null) {
+/**
+ * @todo	We need to support multiple people being assigned.  That might be the with usable behavior, but need some more thought put into it. 
+ */
+	public function add($model = null, $foreignKey = null, $id = null) {
 		if (!empty($this->request->data)) {
 			# find the users from the habtm users array
 			if (!empty($this->request->data['Task']['assignee_id'])) : 
@@ -134,7 +190,7 @@ class TasksController extends TasksAppController {
 				endforeach; else :
 					$this->Session->setFlash(__('The Task List has been saved', true));
 				endif;
-				$this->redirect(array('action' => 'my'), 'success');
+				$this->redirect(array('action' => 'my_lists'), 'success');
 			} else {
 				$this->Session->setFlash(__('The Task could not be saved. Please, try again.', true), 'error');
 			}
@@ -157,7 +213,7 @@ class TasksController extends TasksAppController {
 	}
 
 
-	function edit($id = null) {
+	public function edit($id = null) {
 		if (!empty($this->request->data)) {
 			if ($this->Task->add($this->request->data)) {
 				$this->Session->setFlash(__('The Task has been saved', true));
@@ -180,63 +236,115 @@ class TasksController extends TasksAppController {
 		$this->set(compact('parents','assignees'));
 	}
 
-	function delete($id = null) {
+	public function delete($id = null) {
 		$this->__delete('Task', $id);
 	}
 	
-	/**
-	 * Need to make it so that we set the related model as belongsTo and then pull the display field and add it onto the "name/description".
-	 */
-	function my() {
-		# declare variable in case of non-use
-		if (!isset($this->request->params['named']['completed'])) { $this->request->params['named']['completed'] = ''; }
-		
-		$conditions['Task.assignee_id'] = $this->Session->read('Auth.User.id');	
-		if (!empty($this->request->params['named']['completed']) && $this->request->params['named']['completed'] == 1){
-			$conditions['Task.is_completed'] = 1;
-		} else {
-			$conditions['OR'] = array(
-				array('Task.is_completed' => 0),
-				array('Task.is_completed' => null),
-			);
+/**
+ * Need to make it so that we set the related model as belongsTo and then pull the display field and add it onto the "name/description".
+ * 
+ * @todo move this related stuff to the model, so that its always added to the task views (OR EVEN BEETER, MAKE IT RELATABLE to see if it works, using the RelatableBehavior)
+ */
+	public function my() {
+		if (empty($this->request->params['named']['filter'])) {
+			$this->redirect(array('filter' => 'completed:0'));
 		}
-		$this->paginate = array('conditions' => $conditions, 'order' => array('Task.order' => 'asc', 'Task.due_date' => 'asc'));
-		$tasks = $this->paginate('Task');
-		$projectIds = Set::extract('/Task/foreign_key', $tasks);
-		$projects = $this->Task->Project->find('all', array('conditions' => array('Project.id' => $projectIds)));
-		$projects = Set::combine($projects, '{n}.Project.id', '{n}.Project.displayName');
-		$this->set(compact('tasks', 'projects'));
-		$this->set('page_title_for_layout', 'My '.($this->request->params['named']['completed'] == 1 ? 'Completed' : 'Incomplete').' Tasks');
+		
+		$this->paginate['conditions']['Task.assignee_id'] = $this->Session->read('Auth.User.id');
+		$this->paginate['order']['Task.order'] = 'asc';
+		$this->paginate['order']['Task.due_date'] = 'asc';
+	
+		$rawtasks = $this->paginate('Task');
+		
+		// start the related model functions
+		$related = Set::combine($rawtasks, '{n}.Task.id', '{n}.Task.foreign_key', '{n}.Task.model');
+		
+		foreach($related as $model => $foreignKeys) {
+			if (!empty($model)) {
+				App::uses($model, ZuhaInflector::pluginize($model). '.Model');
+				$Related = new $model;
+				$displayField = $Related->displayField;
+				$associated = $Related->find('all', array(
+					'conditions' => array(
+						"{$model}.id" => $foreignKeys, 
+						),
+					'fields' => array(
+						'id',
+						$displayField,
+						),
+					));
+				$assoc[$model] = Set::combine($associated, "{n}.{$model}.id", "{n}.{$model}.{$displayField}");
+			}
+		}
+		$i = 0;
+		foreach ($rawtasks as $task) {
+			$tasks[$i] = $task;
+			if(!empty($assoc[$task['Task']['model']][$task['Task']['foreign_key']])) {
+				$tasks[$i]['Task']['name'] = $task['Task']['name'] . ' <span class="taskAssociate">' . $assoc[$task['Task']['model']][$task['Task']['foreign_key']] . '</span>';
+			}
+			$i++;
+		}
+		// end the related model functions
+		
+		$this->set(compact('tasks'));
+		$this->set('page_title_for_layout', 'My Tasks');
 	}
 
-	/*
-	 * function my_list is used to get list of parent tasks of logged in user
-	 */
-	function my_lists() {
-		# declare variable in case of non-use
-		if (!isset($this->request->params['named']['completed'])) { $this->request->params['named']['completed'] = ''; }
+/**
+ * function my_list is used to get list of parent tasks of logged in user
+ */
+	public function my_lists() {
 		
-		$conditions['Task.assignee_id'] = $this->Session->read('Auth.User.id');
-		$conditions['Task.parent_id'] = '';		
-		if (!empty($this->request->params['named']['completed']) && $this->request->params['named']['completed'] == 1){
-			$conditions['Task.is_completed'] = 1;
-		} else {
-			$conditions['OR'] = array(
-				array('Task.is_completed' => 0),
-				array('Task.is_completed' => null),
-			);
+		if (empty($this->request->params['named']['filter'])) {
+			$this->redirect(array('filter' => 'completed:0'));
 		}
-		$this->paginate = array('conditions' => $conditions, 'order' => array('Task.order' => 'asc', 'Task.due_date' => 'asc'));
-		$tasks = $this->paginate('Task');
-		$projectIds = Set::extract('/Task/foreign_key', $tasks);
-		$projects = $this->Task->Project->find('all', array('conditions' => array('Project.id' => $projectIds)));
-		$projects = Set::combine($projects, '{n}.Project.id', '{n}.Project.displayName');
-		$this->set(compact('tasks', 'projects'));
-		$this->set('page_title_for_layout', 'My '.($this->request->params['named']['completed'] == 1 ? 'Completed' : 'Incomplete').' Tasks');
+		
+		$this->paginate['conditions']['Task.assignee_id'] = $this->Session->read('Auth.User.id');
+		$this->paginate['conditions']['Task.parent_id'] = null;
+		$this->paginate['order']['Task.order'] = 'asc';
+		$this->paginate['order']['Task.due_date'] = 'asc';
+		
+	
+		$rawtasks = $this->paginate('Task');
+		
+		// start the related model functions
+		$related = Set::combine($rawtasks, '{n}.Task.id', '{n}.Task.foreign_key', '{n}.Task.model');
+		
+		foreach($related as $model => $foreignKeys) {
+			if (!empty($model)) {
+				App::uses($model, ZuhaInflector::pluginize($model). '.Model');
+				$Related = new $model;
+				$displayField = $Related->displayField;
+				$associated = $Related->find('all', array(
+					'conditions' => array(
+						"{$model}.id" => $foreignKeys, 
+						),
+					'fields' => array(
+						'id',
+						$displayField,
+						),
+					));
+				$assoc[$model] = Set::combine($associated, "{n}.{$model}.id", "{n}.{$model}.{$displayField}");
+			}
+		}
+		$i = 0;
+		foreach ($rawtasks as $task) {
+			$tasks[$i] = $task;
+			if(!empty($assoc[$task['Task']['model']][$task['Task']['foreign_key']])) {
+				$tasks[$i]['Task']['name'] = $task['Task']['name'] . ' <span class="taskAssociate">' . $assoc[$task['Task']['model']][$task['Task']['foreign_key']] . '</span>';
+			}
+			$i++;
+		}
+		// end the related model functions
+		
+		$this->set(compact('tasks'));
+		
+		$this->set('page_title_for_layout', 'My '.($this->request->params['named']['filter']['completed'] == 1 ? 'Completed' : 'Incomplete').' Tasks');
+		
 		$this->render('my');
 	}
 	
-	function sort_order() {
+	public function sort_order() {
 		$taskOrders = explode(',', $_POST['taskOrder']);
 		foreach ($taskOrders as $key => $value) {
 			$this->request->data['Task'] = array('id' => $value, 'order' => $key+1);
@@ -248,13 +356,21 @@ class TasksController extends TasksAppController {
 		}
 	}
 	
-	
-	function complete($id = null) {
-		if(!empty($id)) :
+
+/**
+ * Mark a task as complete
+ *
+ * @todo Move the email function to the model (we can send email from models now), and get exceptions if it doesn't. 
+ */ 
+	public function complete($id = null) {
+		if(!empty($id)) {
 			$data['Task']['id'] = $id;
-			if ($this->Task->complete($data)) :
-				$task = $this->Task->find('first', array('recursive'=>0, 'conditions'=>array('Task.id'=>$id), 'fields'=>array('Task.id', 'Task.due_date', 'Task.assignee_id', 'Task.name', 'Task.description', 'Task.model', 'Task.foreign_key', 'Creator.id', 'Creator.email', 'Creator.full_name', 'Assignee.email')));
-				if(!empty($task)) :
+			try {
+				$this->Task->complete($data);
+				
+				// 
+				$task = $this->Task->find('first', array('recursive' => 0, 'conditions'=>array('Task.id'=>$id), 'fields'=>array('Task.id', 'Task.due_date', 'Task.assignee_id', 'Task.name', 'Task.description', 'Task.model', 'Task.foreign_key', 'Creator.id', 'Creator.email', 'Creator.full_name', 'Assignee.email')));
+				if(!empty($task)) {
 					$subject = 'A task "'.$task['Task']['name'].'" was marked as completed';				
 					$message = '<p>The following task was marked as completed</p>';
 					
@@ -268,25 +384,29 @@ class TasksController extends TasksAppController {
 					
 					$message .= '<p><a href="'. Router::url(array('controller'=>'tasks', 'plugin'=>'tasks', 'action'=>'view', $task['Task']['id']), true) . '">' . $taskLabel . '</a> : Due on '.date('m/d/Y', strtotime($task['Task']['due_date']));			
 					$message .= '</p>';
-					$recepients = array($task['Creator']['email'], $task['Assignee']['email']);
+					$recepients = array_filter(array($task['Creator']['email'], $task['Assignee']['email']), 'strlen');
 					//$recepients = 'arvind.mailto@gmail.com';
 					$this->__sendMail($recepients, $subject, $message, $template = 'default');
 					# send the message via email
-				endif;
+				}
 				$this->Session->setFlash('Task Completed');
 				$this->redirect($this->referer(), 'success');
-			else :
-				$this->Session->setFlash('There was an error updating Task.');
+			} catch (Exception $e) {
+				$this->Session->setFlash($e->getMessage());
 				$this->redirect($this->referer(), 'error');
-			endif;
-		else :
+			}
+		} else {
 			$this->Session->setFlash('Invalid task.');
 			$this->redirect($this->referer(), 'error');
-		endif;
+		}
 	}
 	
-	
-	function incomplete($id = null) {
+
+/**
+ * Mark a task as incomplete
+ *
+ */ 	
+	public function incomplete($id = null) {
 		if(!empty($id)) {
 			$data['Task']['id'] = $id;
 			if($this->Task->incomplete($data)) {
@@ -303,10 +423,10 @@ class TasksController extends TasksAppController {
 	}
 	
 	
-	/** 
-	 * show drop downs for the selected projects
-	 */
-    function desktop_index($id = null, $userId = null){
+/** 
+ * show drop downs for the selected projects
+ */
+    public function desktop_index($id = null, $userId = null){
 		$Project = ClassRegistry::init('Projects.Project');
 		$projects = $Project->findUsedObjects($userId, 'all', array('contain' => array('Contact'), 'nocheck' => $userId));
 		foreach ($projects as $project) {
@@ -332,11 +452,11 @@ class TasksController extends TasksAppController {
     }
 	
 	
-	/** 
-	 * Find the estimated hours and tracked hours
-	 * @todo 	This is deprecated, and needs to be moved to Tasks
-	 */
-    function desktop_view($id = null){
+/** 
+ * Find the estimated hours and tracked hours
+ * @todo 	This is deprecated, and needs to be moved to Tasks
+ */
+    public function desktop_view($id = null){
 		$allocatedHours = $this->Task->find('first', array('conditions' => array('id' => $id), 'fields' => 'due_date'));
 		if (!empty($allocatedHours['Task']['estimated_hours'])) {
 			$allocatedHoursSum = $allocatedHours['Task']['estimated_hours'];
@@ -359,12 +479,11 @@ class TasksController extends TasksAppController {
 		
     }
     
-    /** 
-    * Run cron job, called through Task/tasks_callback.php, runcron() method found in appController so it could be run from anywhere. for example http://razorit.com/webpages/webpages/runcron and http://razorit.com/users/users/runcron.
-    * @param - $assignee_id (int), for basically for testing purpose. If a valid assignee id is passed task notifications are sent to that particular user only.
-	 */
-
-    function __cron($options=array()) {
+/** 
+ * Run cron job, called through Task/tasks_callback.php, runcron() method found in appController so it could be run from anywhere. for example http://razorit.com/webpages/webpages/runcron and http://razorit.com/users/users/runcron.
+ * @param - $assignee_id (int), for basically for testing purpose. If a valid assignee id is passed task notifications are sent to that particular user only.
+ */
+    public function __cron($options=array()) {
     	ClassRegistry::init("Tasks.Task");
     	
     	//$this->Task->query("updated tasks set last_notified_date=null");exit;    	
@@ -416,11 +535,10 @@ class TasksController extends TasksAppController {
         echo $this->NotificatonMsg;
     }
 
-	/** 
-	 * send email notifications for incomplete and overdue tasks
-	 */
-
-    function _daily_digest($options=array()) {
+/** 
+ * send email notifications for incomplete and overdue tasks
+ */
+    protected function _daily_digest($options=array()) {
     	
     	App::import('Helper', 'Text');
 		App::uses('View', 'View');
@@ -578,11 +696,10 @@ class TasksController extends TasksAppController {
 		}*/
     }
 
-	/** 
-	 * send email notifications for overdue tasks
-	 */
-
-    function _overdue_notify($options=array())   {
+/** 
+ * send email notifications for overdue tasks
+ */
+    protected function _overdue_notify($options=array())   {
 
         $this->autoRender=false;
         $this->Task->recursive = 0;
@@ -644,11 +761,11 @@ class TasksController extends TasksAppController {
         }
     }
 	
-	/**
-	 * @todo	 This send message thing is used here, and in the messages controller itself.  I don't know where we could put it so that its usable between both.  (Probably would have to do some kind of added on, slow component thing).
-	 * @todo 	 The task messaging is for the entire task list.  It is not per task, like it should be.  But there is some thought that needs to be put in about who gets notifications for tasks.  Assignee, Assigner, and what if you want someone else in on it.  So the todo, is put in that thought and make it happen. 
-	 */
-	function _callback_commentsafterAdd($options) {		
+/**
+ * @todo	 This send message thing is used here, and in the messages controller itself.  I don't know where we could put it so that its usable between both.  (Probably would have to do some kind of added on, slow component thing).
+ * @todo 	 The task messaging is for the entire task list.  It is not per task, like it should be.  But there is some thought that needs to be put in about who gets notifications for tasks.  Assignee, Assigner, and what if you want someone else in on it.  So the todo, is put in that thought and make it happen. 
+ */
+	public function _callback_commentsafterAdd($options) {		
 		if ($this->request->params['action'] == 'view') :		
 			$this->Task->recursive = 0;
 			$task = $this->Task->find('first', array('conditions'=>array('Task.id'=>$options['modelId']), 'fields'=>array('Task.id', 'Task.due_date', 'Task.assignee_id', 'Task.name', 'Task.description', 'Task.model', 'Task.foreign_key', 'Creator.id', 'Creator.email', 'Creator.full_name', 'Assignee.email')));
@@ -672,12 +789,11 @@ class TasksController extends TasksAppController {
 		endif;		
 	}
 	
-	/**
-	* To get "model" data for a task. Project in this case
-	*
-	*/
-	
-	function __findAssociated($curr_model, $data=array())	{
+/**
+ * To get "model" data for a task. Project in this case
+ *
+ */
+	public function __findAssociated($curr_model, $data=array())	{
 		$this->autoRender=false;
 		if(!isset($data[$curr_model]['model']) || !isset($data[$curr_model]['foreign_key'])) return false;
 		if(!$data[$curr_model]['model']) return false;
