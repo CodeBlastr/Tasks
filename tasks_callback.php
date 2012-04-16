@@ -5,9 +5,9 @@ class TasksCallback	{
 		//$this->Controller = &$Controller;
 	}
 	
-	function beforeFilter(&$controller)	{
+	function beforeFilter($controller)	{
 		
-		$this->Controller = &$controller;
+		$this->Controller = $controller;
 
 		if(isset($this->Controller->request->params['action']) && $this->Controller->request->params['action']=='runcron')	{
 			App::import('Controller', 'Tasks.Tasks');
