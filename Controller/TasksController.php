@@ -804,4 +804,34 @@ class TasksController extends TasksAppController {
 		$Model = ClassRegistry::init($init);
 		return $Model->find('first', array('conditions' => array($model.'.id' => $foreignKey), 'fields'=>array($Model->name  . '.' . $Model->displayField)));
 	}
+	
+/**
+ * Private method
+ */
+ 	public function privatize($id = null) {
+		try {
+			$data['Used']['foreign_key'] = $id;
+			$this->Task->privatize($data);
+			$this->Session->setFlash('Privatized');
+			$this->redirect($this->referer());
+		} catch (Exception $e) {
+			$this->Session->setFlash($e->getMessage());
+			$this->redirect($this->referer());
+		}
+	}
+	
+/**
+ * Public method
+ */
+ 	public function publicize($id = null) {
+		try {
+			$data['Used']['foreign_key'] = $id;
+			$this->Task->publicize($data);
+			$this->Session->setFlash('Publicized');
+			$this->redirect($this->referer());
+		} catch (Exception $e) {
+			$this->Session->setFlash($e->getMessage());
+			$this->redirect($this->referer());
+		}
+	}
 }
