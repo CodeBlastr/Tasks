@@ -476,6 +476,7 @@ class TasksController extends TasksAppController {
 		}
 		# this is what it should be to be mvc compliant
 		$this->set('data', array($allocatedHoursSum, $trackedHoursSum, $allocatedHours['Task']['due_date']));
+		$this->layout = false;
 		
     }
     
