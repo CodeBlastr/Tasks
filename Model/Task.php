@@ -212,4 +212,3 @@ class Task extends TasksAppModel {
 		return $task;
 	}
 }
-?>
