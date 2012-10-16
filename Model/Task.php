@@ -211,4 +211,38 @@ class Task extends TasksAppModel {
 		}
 		return $task;
 	}
+	
+	
+	/**
+	 * This trims an object, formats it's values if you need to, and returns the data to be merged with the Transaction data.
+	 * It is a required function for models that will be for sale via the Transactions Plugin.
+	 * @param string $key
+	 * @return array The necessary fields to add a Transaction Item
+	 */
+	public function mapTransactionItem($key) {
+	    
+	    $itemData = $this->find('first', array('conditions' => array('id' => $key)));
+	    
+	    $fieldsToCopyDirectly = array();
+	    
+	    foreach($itemData['Task'] as $k => $v) {
+		if(in_array($k, $fieldsToCopyDirectly)) {
+		    $return['TransactionItem'][$k] = $v;
+		}
+	    }
+
+	    // some custom field transformation action !
+	    $assignee = $this->Assignee->find('first', array(
+		'conditions' => array(
+		    'id' => $itemData['Task']['assignee_id']
+		),
+		'fields' => array('full_name')
+	    ));
+	    $name = $assignee['Assignee']['full_name'] . ' : ' . $itemData['Task']['name'];
+	    	    
+	    $return['TransactionItem']['name'] = $name;
+
+	    return $return;
+	}
+	
 }
