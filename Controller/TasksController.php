@@ -66,8 +66,8 @@ class TasksController extends TasksAppController {
 		} catch (Exception $e) {
 			$this->Session->setFlash($e->getMessage());
 			$this->redirect(array('action' => 'index'));
-		}	
-	
+		}
+
 		if (!empty($task['Task']['parent_id'])) { 
 			$this->_single($task);
 		} else {
@@ -75,6 +75,7 @@ class TasksController extends TasksAppController {
 
 			$this->set('childTasks', $this->_pendingChildTasks($task['Task']['id']));
 			$this->set('finishedChildTasks', $this->_completedChildTasks($task['Task']['id']));
+			$this->set('assignees', $this->Task->Assignee->find('list'));
 			
 			$this->set('parentId', $id);
 			$this->set('showGallery', true);
@@ -86,6 +87,7 @@ class TasksController extends TasksAppController {
 			$this->set('pluginName', 'tasks');
 			$this->set('displayName', 'name');
 			$this->set('displayDescription', 'description');
+			$this->set('page_title_for_layout', __('%s <small>%s</small>', $task['Task']['name'], $task['Associated'][$task['Task']['model']]['name']));
 		}		
 	}
 	
