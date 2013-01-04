@@ -1,4 +1,6 @@
 <?php
+App::uses('TasksAppModel', 'Tasks.Model');
+
 class Task extends TasksAppModel {
 
 	public $name = 'Task';
@@ -213,12 +215,12 @@ class Task extends TasksAppModel {
 	}
 	
 	
-	/**
-	 * This trims an object, formats it's values if you need to, and returns the data to be merged with the Transaction data.
-	 * It is a required function for models that will be for sale via the Transactions Plugin.
-	 * @param string $key
-	 * @return array The necessary fields to add a Transaction Item
-	 */
+/**
+ * This trims an object, formats it's values if you need to, and returns the data to be merged with the Transaction data.
+ * It is a required function for models that will be for sale via the Transactions Plugin.
+ * @param string $key
+ * @return array The necessary fields to add a Transaction Item
+ */
 	public function mapTransactionItem($key) {
 	    
 	    $itemData = $this->find('first', array('conditions' => array('id' => $key)));
