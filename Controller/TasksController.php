@@ -545,7 +545,7 @@ class TasksController extends TasksAppController {
     	
     	App::import('Helper', 'Text');
 		App::uses('View', 'View');
-		$this->Text = & new TextHelper(new View($this));
+		$this->Text = new TextHelper(new View($this)); // removed the & before 'new' ^JB
    	
         $this->autoRender=false;
         $this->Task->recursive = 0;
