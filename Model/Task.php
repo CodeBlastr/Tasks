@@ -232,28 +232,22 @@ class Task extends TasksAppModel {
  * @return array The necessary fields to add a Transaction Item
  */
 	public function mapTransactionItem($key) {
-	    
 	    $itemData = $this->find('first', array('conditions' => array('id' => $key)));
-	    
 	    $fieldsToCopyDirectly = array();
-	    
 	    foreach($itemData['Task'] as $k => $v) {
-		if(in_array($k, $fieldsToCopyDirectly)) {
-		    $return['TransactionItem'][$k] = $v;
-		}
+    		if(in_array($k, $fieldsToCopyDirectly)) {
+    		    $return['TransactionItem'][$k] = $v;
+    		}
 	    }
-
 	    // some custom field transformation action !
 	    $assignee = $this->Assignee->find('first', array(
-		'conditions' => array(
-		    'id' => $itemData['Task']['assignee_id']
-		),
-		'fields' => array('full_name')
-	    ));
-	    $name = $assignee['Assignee']['full_name'] . ' : ' . $itemData['Task']['name'];
-	    	    
+            'conditions' => array(
+                'id' => $itemData['Task']['assignee_id']
+                ),
+            'fields' => array('full_name')
+                ));
+	    $name = $assignee['Assignee']['full_name'] . ' : ' . $itemData['Task']['name']; 
 	    $return['TransactionItem']['name'] = $name;
-
 	    return $return;
 	}
 	

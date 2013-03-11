@@ -4,7 +4,7 @@
       <div class="viewRow">
         <ul class="metaData">
          <li><span class="metaDataLabel">
-            </span><span class="metaDataDetail"><?php echo $task['Task']['name']; ?></span></li>
+            </span><span class="metaDataDetail"><?php echo $task['Task']['displayName']; ?></span></li>
           <li><span class="metaDataLabel">
             <?php echo __(' for '); ?>
             </span><span class="metaDataDetail"><?php echo $this->Html->link(strip_tags($task['Associated'][$model][$modelDisplayField]), array('plugin' => strtolower(ZuhaInflector::pluginize($model)), 'controller' => Inflector::tableize($model), 'action' => 'view', $foreignKey), array('escape' => false)); ?></span></li>

@@ -24,7 +24,7 @@
 				array('plugin' => 'galleries')); ?>
 			</td>
 			<td>
-				<?php echo $this->Html->link($projects[$task['Task']['foreign_key']] . $task['Task']['name'], array('action' => 'view', $task['Task']['id']), array('escape' => false)); ?>
+				<?php echo $this->Html->link($projects[$task['Task']['foreign_key']] . $task['Task']['displayName'], array('action' => 'view', $task['Task']['id']), array('escape' => false)); ?>
 			</td>
 			<td>
 				<?php echo $this->Time->format('D, M j', $task['Task']['due_date']); ?>
