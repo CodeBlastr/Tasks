@@ -32,13 +32,6 @@ class Task extends TasksAppModel {
 			'fields' => '',
 			'order' => ''
 			),
-		'Project' => array(
-			'className' => 'Projects.Project',
-			'foreignKey' => 'foreign_key',
-			'conditions' => '',
-			'fields' => '',
-			'order' => ''
-			),
 		);
 	
 	public $hasOne = array(
@@ -68,6 +61,18 @@ class Task extends TasksAppModel {
 			),
 		);
 	
+	public function __construct($id = false, $table = null, $ds = null) {
+    	parent::__construct($id, $table, $ds);
+		if (in_array('Projects', CakePlugin::loaded())) {
+			$this->belongsTo['Project'] = array(
+				'className' => 'Projects.Project',
+				'foreignKey' => 'foreign_key',
+				'conditions' => '',
+				'fields' => '',
+				'order' => ''
+			);
+		}
+	}
 	
 /**
  * After Find Callback

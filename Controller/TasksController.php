@@ -3,10 +3,16 @@ class TasksController extends TasksAppController {
 
 	public $name = 'Tasks';
 	public $uses = 'Tasks.Task';
-	public $components = array('Comments.Comments' => array('userModelClass' => 'Users.User'));
 	public $allowedActions = array('desktop_index', 'desktop_view');
 	
 	public $Text;
+	
+	public function __construct($request = null, $response = null) {
+		parent::__construct($request, $response);
+		if ( in_array('Comments', CakePlugin::loaded()) ) {
+			$this->components['Comments.Comments'] = array('userModelClass' => 'Users.User');
+		}
+	}
 	
 	public function beforeFilter() {
 		parent::beforeFilter();
