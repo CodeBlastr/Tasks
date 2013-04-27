@@ -42,6 +42,7 @@ class TasksController extends TasksAppController {
  * index method
  */
 	public function index() {
+		$this->helpers[] = 'Calendar';
 		$this->paginate = array(
 			'conditions' => array(
 				'Task.parent_id NOT' => null,
