@@ -217,11 +217,12 @@ class Task extends TasksAppModel {
 		
 		if (empty($task)) {
 			throw new Exception(__d('tasks', 'Invalid Task', true));
-		} else {
+		} elseif ( !empty($task['Task']['model']) ) {
 			$plugin = ZuhaInflector::pluginize($task['Task']['model']);
 			$model = $task['Task']['model'];
 			$init = !empty($plugin) ? $plugin . '.' . $model : $model;
 			$foreignKey = $task['Task']['foreign_key'];
+			
 			$result = ClassRegistry::init($init)->find('first', array('conditions' => array($model.'.id' => $foreignKey)));
 			
 			$task['Associated'] = $result;

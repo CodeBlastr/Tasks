@@ -67,7 +67,7 @@ class TasksController extends TasksAppController {
 /**
  * view method
  */
-	public function view($id = null) {		
+	public function view($id = null) {
 		try {
 			$task = $this->Task->view($id);
 		} catch (Exception $e) {
@@ -94,6 +94,7 @@ class TasksController extends TasksAppController {
 			$this->set('pluginName', 'tasks');
 			$this->set('displayName', 'name');
 			$this->set('displayDescription', 'description');
+			$this->set('title_for_layout', __('%s - %s', $task['Task']['name'], $task['Associated'][$task['Task']['model']]['name']));
 			$this->set('page_title_for_layout', __('%s <small>%s</small>', $task['Task']['name'], $task['Associated'][$task['Task']['model']]['name']));
 		}		
 	}
@@ -181,41 +182,43 @@ class TasksController extends TasksAppController {
  */
 	public function add($model = null, $foreignKey = null, $id = null) {
 		if (!empty($this->request->data)) {
-			# find the users from the habtm users array
-			if (!empty($this->request->data['Task']['assignee_id'])) : 
+			// find the users from the habtm users array
+			if (!empty($this->request->data['Task']['assignee_id'])) {
 				$recipients = $this->Task->Assignee->find('all', array(
 					'conditions' => array(
 						'Assignee.id' => $this->request->data['Task']['assignee_id'],
 						),
 					));
-			endif;
+			}
 			if ($this->Task->add($this->request->data)) {
-				# send the message via email
-				if (!empty($recipients)) : foreach ($recipients as $recipient) :
-					$message = $this->request->data['Task']['name'];
-					$message .= '<p>You can view and comment on this this task here: <a href="'.$_SERVER['HTTP_REFERER'].'">'.$_SERVER['HTTP_REFERER'].'</a></p>';
-					$this->__sendMail($recipient['Assignee']['email'], 'Task Assigned', $message, $template = 'default');
-					$this->Session->setFlash(__('The Task has been saved', true));
-				endforeach; else :
+				// send the message via email
+				if (!empty($recipients)) {
+					foreach ($recipients as $recipient) {
+						$message = $this->request->data['Task']['name'];
+						$message .= '<p>You can view and comment on this this task here: <a href="'.$_SERVER['HTTP_REFERER'].'">'.$_SERVER['HTTP_REFERER'].'</a></p>';
+						$this->__sendMail($recipient['Assignee']['email'], 'Task Assigned', $message, $template = 'default');
+						$this->Session->setFlash(__('The Task has been saved', true));
+					}
+				} else {
 					$this->Session->setFlash(__('The Task List has been saved', true));
-				endif;
+				}
 				$this->redirect(array('action' => 'my_lists'), 'success');
 			} else {
 				$this->Session->setFlash(__('The Task could not be saved. Please, try again.', true), 'error');
 			}
 		}
-		if (!empty($model) && !empty($foreignKey) && !empty($id)) :
+		if (!empty($model) && !empty($foreignKey) && !empty($id)) {
 			$this->request->data['Task']['parent_id'] = $id;
 			$this->request->data['Task']['model'] = $model;
 			$this->request->data['Task']['foreign_key'] = $foreignKey;
-		elseif (!empty($model) && empty($foreignKey)) :
-			# if the model finds a task then this is a child we're creating
+		} elseif (!empty($model) && empty($foreignKey)) {
+			// if the model finds a task then this is a child we're creating
 			$task = $this->Task->read(null, $model);
 			$this->request->data['Task']['parent_id'] = !empty($task) ? $task['Task']['id'] : null;
-		else : 
+		} else { 
 			$this->request->data['Task']['model'] = !empty($model) ? $model : null;
 			$this->request->data['Task']['foreign_key'] = !empty($foreignKey) ? $foreignKey : null;
-		endif;
+		}
 		$parents = $this->Task->ParentTask->find('list');
 		$assignees = $this->Task->Assignee->find('list');
 		$this->set(compact('parents','assignees'));
