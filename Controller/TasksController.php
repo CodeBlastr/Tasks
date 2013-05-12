@@ -1,5 +1,5 @@
 <?php
-class TasksController extends TasksAppController { 
+class _TasksController extends TasksAppController { 
 
 	public $name = 'Tasks';
 	public $uses = 'Tasks.Task';
@@ -847,4 +847,9 @@ class TasksController extends TasksAppController {
 			$this->redirect($this->referer());
 		}
 	}
+	
+}
+
+if (!isset($refuseInit)) {
+		class TasksController extends _TasksController {}
 }

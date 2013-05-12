@@ -4,7 +4,7 @@ App::uses('TasksAppModel', 'Tasks.Model');
 class Task extends TasksAppModel {
 
 	public $name = 'Task';
-	public $actsAs = array('Tree');
+	public $actsAs = array('Tree', 'Galleries.Mediable');
 	public $validate = array(
 		'name' => array('notempty'),
 	); 
