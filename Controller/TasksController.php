@@ -2,7 +2,11 @@
 class _TasksController extends TasksAppController { 
 
 	public $name = 'Tasks';
-	public $uses = 'Tasks.Task';
+	public $uses = array(
+		'Tasks.Task',
+		'Tasks.TaskAttachment',
+	);
+	
 	public $allowedActions = array('desktop_index', 'desktop_view');
 	
 	public $Text;
@@ -219,6 +223,7 @@ class _TasksController extends TasksAppController {
 			$this->request->data['Task']['model'] = !empty($model) ? $model : null;
 			$this->request->data['Task']['foreign_key'] = !empty($foreignKey) ? $foreignKey : null;
 		}
+		
 		$parents = $this->Task->ParentTask->find('list');
 		$assignees = $this->Task->Assignee->find('list');
 		$this->set(compact('parents','assignees'));
@@ -848,6 +853,29 @@ class _TasksController extends TasksAppController {
 		}
 	}
 	
+	/**
+	 * Get all attachable items by  user
+	 * 
+	 * @param $uid the User Id, Defaults to current user
+	 * @return Returns an Array of Models and Items
+	 */
+	
+	protected function getAttachablesByUser ($uid = null) {
+		if(empty($uid)) {
+			$uid = $this->Session->read('Auth.User.id');
+		}
+		
+		$models = $this->TaskAttachment->attachable;
+		$results = array();
+		
+		foreach($models as $model) {
+			$plugin = ZuhaInflector::pluginize($model);
+			$this->loadModel($plugin.'.'.$model);
+			$results[$model] = Set::combine($this->$model->find('all', array('conditions' => array('creator_id' => $uid))), '{n}.'.$model.'.id', '{n}.'.$model);
+		}
+		
+		return $results;
+	}
 }
 
 if (!isset($refuseInit)) {

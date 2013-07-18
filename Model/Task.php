@@ -59,7 +59,21 @@ class Task extends TasksAppModel {
 			'finderQuery' => '',
 			'counterQuery' => ''
 			),
+		'TaskAttachment' => array(
+			'className' => 'Tasks.TaskAttachment',
+			'foreignKey' => 'task_id',
+			'dependent' => false,
+			'conditions' => '',
+			'fields' => '',
+			'order' => '',
+			'limit' => '',
+			'offset' => '',
+			'exclusive' => '',
+			'finderQuery' => '',
+			'counterQuery' => ''
+			),
 		);
+		
 	
 	public function __construct($id = false, $table = null, $ds = null) {
     	parent::__construct($id, $table, $ds);
@@ -87,10 +101,15 @@ class Task extends TasksAppModel {
  * add a task
  */
 	public function add($data) {
+		
 		$data = $this->cleanData($data);
 		
-		if ($this->save($data)) {
+		if(isset($data['GalleryImage'])) {
 			$this->galleryData($data);
+			unset($data['GalleryImage']);
+		}
+		
+		 if ($this->saveAll($data)) {
 			return true;
 		} else {
 			return false;
@@ -195,7 +214,7 @@ class Task extends TasksAppModel {
 	public function cleanData($data) {
 		if (empty($data['Task']['name']) && !empty($data['Task']['description'])) {
 			$data['Task']['name'] = $data['Task']['description'];
-		}		
+		}	
 		return $data;
 	}
 	
