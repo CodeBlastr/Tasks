@@ -98,6 +98,7 @@ class _Task extends TasksAppModel {
  * 
  */
 	public function afterFind($results, $primary = false) {
+		parent::afterFind($results, $primary);
 	    return $this->triggerOriginCallback('origin_afterFind', $results, $primary); 
 	}
 
