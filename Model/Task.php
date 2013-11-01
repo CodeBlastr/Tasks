@@ -6,7 +6,7 @@ App::uses('TasksAppModel', 'Tasks.Model');
  * $refuseInit = true; require_once(ROOT.DS.'app'.DS.'Plugin'.DS.'Tasks'.DS.'Model'.DS.'Task.php');
  */
 
-class _Task extends TasksAppModel {
+class AppTask extends TasksAppModel {
 
 	public $name = 'Task';
 	public $actsAs = array('Tree', 'Galleries.Mediable');
@@ -310,5 +310,5 @@ class _Task extends TasksAppModel {
 }
 
 if (!isset($refuseInit)) {
-	class Task extends _Task {}
+	class Task extends AppTask {}
 }

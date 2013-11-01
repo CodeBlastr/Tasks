@@ -1,5 +1,5 @@
 <?php
-class _TasksController extends TasksAppController { 
+class AppTasksController extends TasksAppController { 
 
 	public $name = 'Tasks';
 	public $uses = array(
@@ -856,5 +856,5 @@ class _TasksController extends TasksAppController {
 }
 
 if (!isset($refuseInit)) {
-		class TasksController extends _TasksController {}
+		class TasksController extends AppTasksController {}
 }
