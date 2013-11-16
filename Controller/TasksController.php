@@ -206,9 +206,9 @@ class AppTasksController extends TasksAppController {
 				} else {
 					$this->Session->setFlash(__('The Task List has been saved', true));
 				}
-				$this->redirect(array('action' => 'my_lists'), 'success');
+				$this->redirect(array('action' => 'my_lists'));
 			} else {
-				$this->Session->setFlash(__('The Task could not be saved. Please, try again.', true), 'error');
+				$this->Session->setFlash(__('The Task could not be saved. Please, try again.'));
 			}
 		}
 		if (!empty($model) && !empty($foreignKey) && !empty($id)) {
@@ -234,9 +234,9 @@ class AppTasksController extends TasksAppController {
 		if (!empty($this->request->data)) {
 			if ($this->Task->add($this->request->data)) {
 				$this->Session->setFlash(__('The Task has been saved', true));
-				$this->redirect($this->referer(), 'success');
+				$this->redirect($this->referer());
 			} else {
-				$this->Session->setFlash(__('The Task could not be saved. Please, try again.', true));
+				$this->Session->setFlash(__('The Task could not be saved. Please, try again.'));
 			}
 		}
 		if (empty($this->request->data)) {
@@ -407,14 +407,14 @@ class AppTasksController extends TasksAppController {
 					# send the message via email
 				}
 				$this->Session->setFlash('Task Completed');
-				$this->redirect($this->referer(), 'success');
+				$this->redirect($this->referer());
 			} catch (Exception $e) {
 				$this->Session->setFlash($e->getMessage());
-				$this->redirect($this->referer(), 'error');
+				$this->redirect($this->referer());
 			}
 		} else {
 			$this->Session->setFlash('Invalid task.');
-			$this->redirect($this->referer(), 'error');
+			$this->redirect($this->referer());
 		}
 	}
 	
@@ -428,10 +428,10 @@ class AppTasksController extends TasksAppController {
 			$data['Task']['id'] = $id;
 			if($this->Task->incomplete($data)) {
 				$this->Session->setFlash('Task Incomplete');
-				$this->redirect($this->referer(), 'success');
+				$this->redirect($this->referer());
 			} else {
 				$this->Session->setFlash('There was an error updating Task.');
-				$this->redirect($this->referer(), 'error');
+				$this->redirect($this->referer());
 			}
 		} else {
 			$this->Session->setFlash('Invalid task.');
