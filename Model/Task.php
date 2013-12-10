@@ -1,15 +1,12 @@
 <?php
 App::uses('TasksAppModel', 'Tasks.Model');
 
-/**
- * Extension Code
- * $refuseInit = true; require_once(ROOT.DS.'app'.DS.'Plugin'.DS.'Tasks'.DS.'Model'.DS.'Task.php');
- */
-
 class AppTask extends TasksAppModel {
 
 	public $name = 'Task';
-	public $actsAs = array('Tree', 'Galleries.Mediable');
+
+	public $actsAs = array('Tree', 'Galleries.Mediable', 'Users.Usable', 'Copyable');
+
 	public $validate = array(
 		'name' => array('notempty'),
 	); 
@@ -64,11 +61,24 @@ class AppTask extends TasksAppModel {
 			'finderQuery' => '',
 			'counterQuery' => ''
 			),
-		'TaskAttachment' => array(
-			'className' => 'Tasks.TaskAttachment',
-			'foreignKey' => 'task_id',
-			'dependent' => false,
-			'conditions' => '',
+		// 'TaskAttachment' => array(
+			// 'className' => 'Tasks.TaskAttachment',
+			// 'foreignKey' => 'task_id',
+			// 'dependent' => false,
+			// 'conditions' => '',
+			// 'fields' => '',
+			// 'order' => '',
+			// 'limit' => '',
+			// 'offset' => '',
+			// 'exclusive' => '',
+			// 'finderQuery' => '',
+			// 'counterQuery' => ''
+			// ),
+		'Used' => array(
+			'className' => 'Users.Used',
+			'foreignKey' => 'foreign_key',
+			'dependent' => true,
+			'conditions' => array('Used.model' => 'Task'),
 			'fields' => '',
 			'order' => '',
 			'limit' => '',
@@ -78,11 +88,10 @@ class AppTask extends TasksAppModel {
 			'counterQuery' => ''
 			),
 		);
-		
-	
+
 	public function __construct($id = false, $table = null, $ds = null) {
     	parent::__construct($id, $table, $ds);
-		if (in_array('Projects', CakePlugin::loaded())) {
+		if (CakePlugin::loaded('Projects')) {
 			$this->belongsTo['Project'] = array(
 				'className' => 'Projects.Project',
 				'foreignKey' => 'foreign_key',
@@ -92,9 +101,9 @@ class AppTask extends TasksAppModel {
 			);
 		}
 	}
-	
+
 /**
- * After Find Callback
+ * After Find callback
  * 
  */
 	public function afterFind($results, $primary = false) {
@@ -102,26 +111,49 @@ class AppTask extends TasksAppModel {
 	    return $this->triggerOriginCallback('origin_afterFind', $results, $primary); 
 	}
 
+/**
+ * Find method
+ * Overwritten to auto relate related models
+ */
+ 	public function find($type = 'first', $params = array()) {
+ 		$this->_autoBind($params);
+		return parent::find($type, $params);
+ 	}
+
+/**
+ * Auto Bind method
+ */
+ 	public function _autoBind($params = array()) {
+		if (!empty($params['contain']) && is_array($params['contain'])) {
+			$allAssociations = array();
+			foreach ($this->_associations as $association) {
+				$allAssociations = array_merge($allAssociations, $this->$association);
+			}
+			foreach ($params['contain'] as $key => $model) {
+				$model = is_string($key) ? $key : $model; 
+				if (empty($allAssociations[$model])) {
+					$this->bindModel(array('belongsTo' => array($model => array('foreignKey' => 'foreign_key'))));
+				}
+			}
+		}
+ 	}
 
 /**
  * add a task
  */
 	public function add($data) {
-		
 		$data = $this->cleanData($data);
-		
-		if(isset($data['GalleryImage'])) {
+		if (isset($data['GalleryImage'])) {
 			$this->galleryData($data);
 			unset($data['GalleryImage']);
 		}
-		
-		 if ($this->saveAll($data)) {
+		if ($this->saveAll($data)) {
 			return true;
 		} else {
 			return false;
 		}
 	}
-	
+
 /**
  * galleryData saves the gallery if there is GalleryImage data present 
  *
@@ -132,30 +164,28 @@ class AppTask extends TasksAppModel {
 		$data['Gallery']['foreign_key'] = $this->id;
 
 		// check if GalleryImage data is in data 
-		if (isset($data['GalleryImage'])){
-			if ($data['GalleryImage']['filename']['error'] == 0 
-					&& $this->Gallery->GalleryImage->add($data, 'filename')) {
+		if (isset($data['GalleryImage'])) {
+			if ($data['GalleryImage']['filename']['error'] == 0 && $this->Gallery->GalleryImage->add($data, 'filename')) {
 				return true;
 			} else {
 				return false;
 			}
 		} 
 	}
-	
-	
+
 /**
  * Set a task as complete
  *
  * return bool
  */
 	public function complete($data) {		
-		if($this->saveAll($this->_isParentComplete($data, 'complete'))) {
+		if ($this->saveAll($this->_isParentComplete($data, 'complete'))) {
 			return true;
 		} else {
 			throw new Exception(__d('tasks', 'Task could not be marked complete.', true));
 		}
 	}
-	
+
 /**
  * Set parent task list completion status
  *
@@ -191,27 +221,24 @@ class AppTask extends TasksAppModel {
 				$data = $task;
 			}
 		}
-		
 		$data['Task']['is_completed'] = $status == 'complete' ? 1 : 0;
 		$data['Task']['completed_date'] = $status == 'complete' ? date('Y-m-d h:i:s') : null;
 		return $data;
 	}
-	
-	
+
 /**
  * Mark a task as incomplete
  *
  * @return array
  */
 	public function incomplete($data) {
-		if($this->saveAll($this->_isParentComplete($data, 'incomplete'))) {
+		if ($this->saveAll($this->_isParentComplete($data, 'incomplete'))) {
 			return true;
 		} else {
 			throw new Exception(__d('tasks', 'Task could not be marked incomplete.', true));
 		}
 	}
-	
-	
+
 /**
  * Standardize data
  *
@@ -223,26 +250,26 @@ class AppTask extends TasksAppModel {
 		}	
 		return $data;
 	}
-	
-	
+
 /**
  * Return a task for the view method
  * 
+ * MAN THIS IS UGLY!!!  NEEDS TO BE REMOVED
  * @return array
  */
 	public function view($id = null, $params = null) {
-		$task = $this->find('first', array(
+		$defaults = array(
 			'conditions' => array(
 				'or' => array(
 					'Task.id' => $id,
 					),
-				),
-			$params,
-			));
-		
+				)
+			);
+		$options = Set::merge($params, $defaults);
+		$task = $this->find('first', $options);
 		if (empty($task)) {
 			throw new Exception(__d('tasks', 'Invalid Task', true));
-		} elseif ( !empty($task['Task']['model']) ) {
+		} elseif (!empty($task['Task']['model'])) {
 			$plugin = ZuhaInflector::pluginize($task['Task']['model']);
 			$model = $task['Task']['model'];
 			$init = !empty($plugin) ? $plugin . '.' . $model : $model;
@@ -252,10 +279,24 @@ class AppTask extends TasksAppModel {
 			
 			$task['Associated'] = $result;
 		}
+		// attach associated data for the ChildTask's as well
+		if (!empty($task['ChildTask'])) {
+			foreach ($task['ChildTask'] as &$childTask) {
+				if (!empty($childTask['model'])) {
+					$plugin = ZuhaInflector::pluginize($childTask['model']);
+					$model = $task['Task']['model'];
+					$init = !empty($plugin) ? $plugin . '.' . $model : $model;
+					$foreignKey = $childTask['foreign_key'];
+					
+					$result = ClassRegistry::init($init)->find('first', array('conditions' => array($model.'.id' => $foreignKey)));
+					
+					$childTask['Associated'] = $result;
+				}
+			}
+		}
 		return $task;
 	}
-	
-	
+
 /**
  * This trims an object, formats it's values if you need to, and returns the data to be merged with the Transaction data.
  * It is a required function for models that will be for sale via the Transactions Plugin.
@@ -282,30 +323,32 @@ class AppTask extends TasksAppModel {
 	    return $return;
 	}
 	
-	/**
-	 * Get all attachable items by  user
-	 * 
-	 * @param $uid the User Id, Defaults to current user
-	 * @return Returns an Array of Models and Items
-	 */
-	
-	public function getAttachablesByUser ($uid = null) {
-		
-		if(empty($uid)) {
-			$uid = $this->userId;
-		}
-		
-		$models = $this->TaskAttachment->attachable;
-		$results = array();
-		
-		foreach($models as $model) {
-			$plugin = ZuhaInflector::pluginize($model);
-			$Model = ClassRegistry::init($plugin.'.'.$model);
-			$results[$model] = Set::combine($Model->find('all', array('conditions' => array('creator_id' => $uid))), '{n}.'.$model.'.id', '{n}.'.$model);
-		}
-		
-		return $results;
-	}
+/**
+ * Get all attachable items by  user
+ * 
+ * @param $uid the User Id, Defaults to current user
+ * @return Returns an Array of Models and Items
+ * 
+ * PURPOSELY BROKEN BECAUSE THIS TABLE SHOULDN'T EXIST
+ * IF IT'S NEEDED FOR A PARTICULAR SITE, WE NEED TO CHAT ABOU IT 12/8/2013 RK
+ */
+	// public function getAttachablesByUser ($uid = null) {
+// 		
+		// if(empty($uid)) {
+			// $uid = $this->userId;
+		// }
+// 		
+		// $models = $this->TaskAttachment->attachable;
+		// $results = array();
+// 		
+		// foreach($models as $model) {
+			// $plugin = ZuhaInflector::pluginize($model);
+			// $Model = ClassRegistry::init($plugin.'.'.$model);
+			// $results[$model] = Set::combine($Model->find('all', array('conditions' => array('creator_id' => $uid))), '{n}.'.$model.'.id', '{n}.'.$model);
+		// }
+// 		
+		// return $results;
+	// }
 	
 }
 

@@ -37,4 +37,4 @@ $this->set('context_menu', array('menus' => array(
 			$completeAction,
 			),
 		)
-	))); ?>
+	)));

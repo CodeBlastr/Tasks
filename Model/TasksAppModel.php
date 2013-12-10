@@ -2,4 +2,3 @@
 class TasksAppModel extends AppModel {
 
 }
-?>

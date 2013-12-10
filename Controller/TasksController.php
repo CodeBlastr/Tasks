@@ -2,14 +2,15 @@
 class AppTasksController extends TasksAppController { 
 
 	public $name = 'Tasks';
+
 	public $uses = array(
 		'Tasks.Task',
-		'Tasks.TaskAttachment',
+		//'Tasks.TaskAttachment', 
 	);
-	
+
 	public $allowedActions = array('desktop_index', 'desktop_view');
-	
-	public $Text;
+
+	public $Text; // WHAT THE HELL IS THIS, PUT A COMMENT ON IT!!!
 	
 	public function __construct($request = null, $response = null) {
 		parent::__construct($request, $response);
@@ -17,7 +18,10 @@ class AppTasksController extends TasksAppController {
 			$this->components['Comments.Comments'] = array('userModelClass' => 'Users.User');
 		}
 	}
-	
+
+/**
+ * Before filter callback
+ */
 	public function beforeFilter() {
 		parent::beforeFilter();
 		$this->passedArgs['comment_view_type'] = 'flat';
@@ -47,25 +51,16 @@ class AppTasksController extends TasksAppController {
  */
 	public function index() {
 		$this->helpers[] = 'Calendar';
-		$this->paginate = array(
-			'conditions' => array(
-				'Task.parent_id NOT' => null,
-				'Task.is_completed' => 0,
-				),
-			'order' => array(
-				'Task.order',
-				'Task.due_date',
-				),
-			'contain' => array(
-				'Assignee',
-				),
-			);
-		$tasks = $this->paginate();
-		$projectIds = Set::extract('/Task/foreign_key', $tasks);
-		$projects = $this->Task->Project->find('all', array('conditions' => array('Project.id' => $projectIds)));
-		$projects = Set::combine($projects, '{n}.Project.id', '{n}.Project.displayName');
-		$this->set(compact('tasks', 'projects'));
-		$this->set('page_title_for_layout', 'All Tasks');
+		$this->paginate['conditions']['Task.parent_id'] = null;
+		$this->paginate['conditions']['Task.is_completed'] = 0;
+		$this->paginate['order']['Task.order'] = 'ASC';
+		$this->paginate['order']['Task.due_date'] = 'ASC';
+		$this->paginate['contain'][] = 'Assignee';
+		$this->paginate['contain']['ChildTask'][] = 'Assignee';
+		$this->set('tasks', $this->request->data = $this->paginate());
+		$this->set('page_title_for_layout', 'All Task Lists');
+		$this->set('title_for_layout', 'All Task Lists');
+		return $this->request->data;
 	}
 
 /**
@@ -266,45 +261,48 @@ class AppTasksController extends TasksAppController {
 		if (empty($this->request->params['named']['filter'])) {
 			$this->redirect(array('filter' => 'completed:0'));
 		}
+		// $this->paginate['conditions']['Task.assignee_id'] = $this->Session->read('Auth.User.id');
+		// $this->paginate['order']['Task.order'] = 'asc';
+		// $this->paginate['order']['Task.due_date'] = 'asc';
+		$this->index();
+		$tasks = $this->paginate('Task');
 		
-		$this->paginate['conditions']['Task.assignee_id'] = $this->Session->read('Auth.User.id');
-		$this->paginate['order']['Task.order'] = 'asc';
-		$this->paginate['order']['Task.due_date'] = 'asc';
-	
-		$rawtasks = $this->paginate('Task');
+		// THIS DOES NOT BELONG HERE 
+		// There is a function called origin_afterFind($results, $primary) that you can put in the original plugin's model
+		// to change the data before you out put it.  This changing of the name by default is not good.  12/7/2013 RK 
+		// $rawtasks = $this->paginate('Task');
 		
 		// start the related model functions
-		$related = Set::combine($rawtasks, '{n}.Task.id', '{n}.Task.foreign_key', '{n}.Task.model');
-		
-		foreach($related as $model => $foreignKeys) {
-			if (!empty($model)) {
-				App::uses($model, ZuhaInflector::pluginize($model). '.Model');
-				$Related = new $model;
-				$displayField = $Related->displayField;
-				$associated = $Related->find('all', array(
-					'conditions' => array(
-						"{$model}.id" => $foreignKeys, 
-						),
-					'fields' => array(
-						'id',
-						$displayField,
-						),
-					));
-				$assoc[$model] = Set::combine($associated, "{n}.{$model}.id", "{n}.{$model}.{$displayField}");
-			}
-		}
-		$i = 0;
-		foreach ($rawtasks as $task) {
-			$tasks[$i] = $task;
-			if(!empty($assoc[$task['Task']['model']][$task['Task']['foreign_key']])) {
-				$tasks[$i]['Task']['name'] = $task['Task']['name'] . ' <span class="taskAssociate">' . $assoc[$task['Task']['model']][$task['Task']['foreign_key']] . '</span>';
-			}
-			$i++;
-		}
+		// $related = Set::combine($rawtasks, '{n}.Task.id', '{n}.Task.foreign_key', '{n}.Task.model');
+		// foreach($related as $model => $foreignKeys) {
+			// if (!empty($model)) {
+				// App::uses($model, ZuhaInflector::pluginize($model). '.Model');
+				// $Related = new $model;
+				// $displayField = $Related->displayField;
+				// $associated = $Related->find('all', array(
+					// 'conditions' => array(
+						// "{$model}.id" => $foreignKeys, 
+						// ),
+					// 'fields' => array(
+						// 'id',
+						// $displayField,
+						// ),
+					// ));
+				// $assoc[$model] = Set::combine($associated, "{n}.{$model}.id", "{n}.{$model}.{$displayField}");
+			// }
+		// }
+		// $i = 0;
+		// foreach ($rawtasks as $task) {
+			// $tasks[$i] = $task;
+			// if(!empty($assoc[$task['Task']['model']][$task['Task']['foreign_key']])) {
+				// $tasks[$i]['Task']['name'] = $task['Task']['name'] . ' <span class="taskAssociate">' . $assoc[$task['Task']['model']][$task['Task']['foreign_key']] . '</span>';
+			// }
+			// $i++;
+		// }
 		// end the related model functions
-		
 		$this->set(compact('tasks'));
 		$this->set('page_title_for_layout', 'My Tasks');
+		$this->set('title_for_layout', 'My Tasks');
 	}
 
 /**
