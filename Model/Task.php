@@ -323,33 +323,6 @@ class AppTask extends TasksAppModel {
 	    return $return;
 	}
 	
-/**
- * Get all attachable items by  user
- * 
- * @param $uid the User Id, Defaults to current user
- * @return Returns an Array of Models and Items
- * 
- * PURPOSELY BROKEN BECAUSE THIS TABLE SHOULDN'T EXIST
- * IF IT'S NEEDED FOR A PARTICULAR SITE, WE NEED TO CHAT ABOU IT 12/8/2013 RK
- */
-	// public function getAttachablesByUser ($uid = null) {
-// 		
-		// if(empty($uid)) {
-			// $uid = $this->userId;
-		// }
-// 		
-		// $models = $this->TaskAttachment->attachable;
-		// $results = array();
-// 		
-		// foreach($models as $model) {
-			// $plugin = ZuhaInflector::pluginize($model);
-			// $Model = ClassRegistry::init($plugin.'.'.$model);
-			// $results[$model] = Set::combine($Model->find('all', array('conditions' => array('creator_id' => $uid))), '{n}.'.$model.'.id', '{n}.'.$model);
-		// }
-// 		
-		// return $results;
-	// }
-	
 }
 
 if (!isset($refuseInit)) {
