@@ -3,8 +3,6 @@ class AppTaskItemsController extends TasksAppController {
 
 	public $name = 'TaskItems';
 
-	public $allowedActions = array('edit'); // remove this
-
 /**
  * @todo This should be TaskChild at some point.  More comments 
  * on that in the Task Model. 
