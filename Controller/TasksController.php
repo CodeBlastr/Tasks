@@ -28,8 +28,10 @@ class AppTasksController extends TasksAppController {
 	}
 	
 /**
- * gadget method 
- * use for gmail gadget view 
+ * Gadget method 
+ * Used for gmail gadget view 
+ * 
+ * @todo delete this
  */
 	public function gadget(){
 		$this->layout = 'gadget';
@@ -47,7 +49,7 @@ class AppTasksController extends TasksAppController {
 	}
 	
 /**
- * index method
+ * Index method
  */
 	public function index() {
 		$this->helpers[] = 'Calendar';
@@ -64,7 +66,7 @@ class AppTasksController extends TasksAppController {
 	}
 
 /**
- * view method
+ * View method
  */
 	public function view($id = null) {
 		try {
@@ -97,8 +99,10 @@ class AppTasksController extends TasksAppController {
 			$this->set('page_title_for_layout', __('%s <small>%s</small>', $task['Task']['name'], $task['Associated'][$task['Task']['model']]['name']));
 		}		
 	}
-	
-	
+
+/**
+ * Pending Child Tasks
+ */
 	protected function _pendingChildTasks($parentTaskId) {
 		unset($this->paginate);
 		$this->paginate = array(
@@ -128,8 +132,10 @@ class AppTasksController extends TasksAppController {
 			);
 		return $this->paginate('Task');
 	}
-	
-	
+
+/**
+ * Completed Child Tasks
+ */
 	protected function _completedChildTasks($parentTaskId) {
 		unset($this->paginate);
 		$this->paginate = array(
@@ -177,6 +183,8 @@ class AppTasksController extends TasksAppController {
 
 
 /**
+ * Add method
+ * 
  * @todo	We need to support multiple people being assigned.  That might be the with usable behavior, but need some more thought put into it. 
  */
 	public function add($model = null, $foreignKey = null, $id = null) {
@@ -201,7 +209,9 @@ class AppTasksController extends TasksAppController {
 				} else {
 					$this->Session->setFlash(__('The Task List has been saved', true));
 				}
-				$this->redirect(array('action' => 'my_lists'));
+				// go to parent if this was a sub item added
+				$id = !empty($this->request->data['Task']['parent_id']) ? $this->request->data['Task']['parent_id'] : $this->Task->id;
+				$this->redirect(array('action' => 'view', $id));
 			} else {
 				$this->Session->setFlash(__('The Task could not be saved. Please, try again.'));
 			}
@@ -224,12 +234,18 @@ class AppTasksController extends TasksAppController {
 		$this->set(compact('parents','assignees'));
 	}
 
-
+/**
+ * Edit method
+ * 
+ * @param string uuid
+ */
 	public function edit($id = null) {
 		if (!empty($this->request->data)) {
 			if ($this->Task->add($this->request->data)) {
-				$this->Session->setFlash(__('The Task has been saved', true));
-				$this->redirect($this->referer());
+				$this->Session->setFlash(__('The Task has been saved'));
+				// go to parent if this is a child
+				$id = !empty($this->request->data['Task']['parent_id']) ? $this->request->data['Task']['parent_id'] : $this->Task->id;
+				$this->redirect(array('action' => 'view', $id));
 			} else {
 				$this->Session->setFlash(__('The Task could not be saved. Please, try again.'));
 			}
@@ -248,8 +264,23 @@ class AppTasksController extends TasksAppController {
 		$this->set(compact('parents','assignees'));
 	}
 
+/**
+ * Delete method
+ * 
+ * @param uuid $id
+ */
 	public function delete($id = null) {
-		$this->__delete('Task', $id);
+		$this->Task->id = $id;
+		if (!$this->Task->exists()) {
+			throw new NotFoundException(__('Invalid task'));
+		}
+		if ($this->Task->delete($id)) {
+			$this->Session->setFlash(__('Deleted'));
+			$this->redirect($this->referer());
+		} else {
+			$this->Session->setFlash(__('Error deleting, please try again.'));
+			$this->redirect($this->referer());
+		}
 	}
 	
 /**
@@ -306,25 +337,20 @@ class AppTasksController extends TasksAppController {
 	}
 
 /**
- * function my_list is used to get list of parent tasks of logged in user
+ * My Lists
+ * Used to get list of parent tasks of logged in user
  */
 	public function my_lists() {
-		
 		if (empty($this->request->params['named']['filter'])) {
 			$this->redirect(array('filter' => 'completed:0'));
 		}
-		
 		$this->paginate['conditions']['Task.assignee_id'] = $this->Session->read('Auth.User.id');
 		$this->paginate['conditions']['Task.parent_id'] = null;
 		$this->paginate['order']['Task.order'] = 'asc';
 		$this->paginate['order']['Task.due_date'] = 'asc';
-		
-	
 		$rawtasks = $this->paginate('Task');
-		
 		// start the related model functions
 		$related = Set::combine($rawtasks, '{n}.Task.id', '{n}.Task.foreign_key', '{n}.Task.model');
-		
 		foreach($related as $model => $foreignKeys) {
 			if (!empty($model)) {
 				App::uses($model, ZuhaInflector::pluginize($model). '.Model');
@@ -351,14 +377,14 @@ class AppTasksController extends TasksAppController {
 			$i++;
 		}
 		// end the related model functions
-		
 		$this->set(compact('tasks'));
-		
 		$this->set('page_title_for_layout', 'My '.($this->request->params['named']['filter']['completed'] == 1 ? 'Completed' : 'Incomplete').' Tasks');
-		
 		$this->render('my');
 	}
-	
+
+/**
+ * Sort Order
+ */
 	public function sort_order() {
 		$taskOrders = explode(',', $_POST['taskOrder']);
 		foreach ($taskOrders as $key => $value) {
