@@ -781,28 +781,23 @@ class AppTasksController extends TasksAppController {
  * @todo	 This send message thing is used here, and in the messages controller itself.  I don't know where we could put it so that its usable between both.  (Probably would have to do some kind of added on, slow component thing).
  * @todo 	 The task messaging is for the entire task list.  It is not per task, like it should be.  But there is some thought that needs to be put in about who gets notifications for tasks.  Assignee, Assigner, and what if you want someone else in on it.  So the todo, is put in that thought and make it happen. 
  */
-	public function _callback_commentsafterAdd($options) {		
-		if ($this->request->params['action'] == 'view') :		
+	public function _callback_commentsafterAdd($options) {	
+		if ($this->request->params['action'] == 'view') {	
 			$this->Task->recursive = 0;
 			$task = $this->Task->find('first', array('conditions'=>array('Task.id'=>$options['modelId']), 'fields'=>array('Task.id', 'Task.due_date', 'Task.assignee_id', 'Task.name', 'Task.description', 'Task.model', 'Task.foreign_key', 'Creator.id', 'Creator.email', 'Creator.full_name', 'Assignee.email')));
-			if(!empty($task))	{
+			if(!empty($task)) {
 				$subject = 'A comment on the task "'.$task['Task']['name'].'" was posted';
-				
 				$taskLabel = $task['Task']['name'];
-
 				$associated = $this->__findAssociated("Task", $task);
-				
 				if($associated)	{
 					$taskLabel .= ' : ' . $associated[$task['Task']['model']]['displayName'];	
-				}				
-				
+				}
 				$message = '<p><a href="'. Router::url(array('controller'=>'tasks', 'plugin'=>'tasks', 'action'=>'view', $task['Task']['id']), true) . '">' . $taskLabel . '</a> : Due on '.date('m/d/Y', strtotime($task['Task']['due_date'])).'<br />';			
 				$message .= $options['data']['Comment']['title'] . ' : ' . $options['data']['Comment']['body'];
 				$message .= '</p>';
 				$this->__sendMail(array($task['Creator']['email'], $task['Assignee']['email']), $subject, $message, $template = 'default');
-				# send the message via email
 			}
-		endif;		
+		}	
 	}
 	
 /**

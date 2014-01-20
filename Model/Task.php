@@ -1,6 +1,13 @@
 <?php
 App::uses('TasksAppModel', 'Tasks.Model');
 
+/**
+ * @todo We need to make a real ChildTask model, that uses the same table. 
+ * Then when you are saving something that has a parent_id or is using the model
+ * name ChildTask it will do that saving in that model and not here.  This will
+ * ease validation across the two types of tasks there are.  Lists and Items.
+ */
+
 class AppTask extends TasksAppModel {
 
 	public $name = 'Task';
@@ -9,7 +16,15 @@ class AppTask extends TasksAppModel {
 
 	public $validate = array(
 		'name' => array('notempty'),
-	); 
+		// future validation in the ChildTask model, mentioned in the @todo above
+		// 'due_date' => array(
+			// 'dueDate' => array(
+				// 'rule' => array('_dueDate'),
+				// 'allowEmpty' => true, 
+				// 'message' => 'Please choose a date.',
+				// )
+			// )
+	);
 	
 	//The Associations below have been created with all possible keys, those that are not needed can be removed
 	public $belongsTo = array(
@@ -36,16 +51,16 @@ class AppTask extends TasksAppModel {
 			),
 		);
 	
-	public $hasOne = array(
-		'Gallery' => array(
-			'className' => 'Galleries.Gallery',
-			'foreignKey' => 'foreign_key',
-			'dependent' => false,
-			'conditions' => array('Gallery.model' => 'Task'),
-			'fields' => '',
-			'order' => ''
-			),
-		);	
+	// public $hasOne = array(
+		// 'Gallery' => array(
+			// 'className' => 'Galleries.Gallery',
+			// 'foreignKey' => 'foreign_key',
+			// 'dependent' => false,
+			// 'conditions' => array('Gallery.model' => 'Task'),
+			// 'fields' => '',
+			// 'order' => ''
+			// ),
+		// );	
 		
 	public $hasMany = array(
 		'ChildTask' => array(
@@ -100,6 +115,21 @@ class AppTask extends TasksAppModel {
 				'order' => ''
 			);
 		}
+	}
+
+/**
+ * Validate due date
+ * 
+ * If there is a parent id, then there should be a due date
+ * @return bool
+ */
+	public function _dueDate() {
+		if (!empty($this->data[$this->alias]['parent_id'])) {
+			if (empty($this->data[$this->alias]['due_date'])) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 /**
@@ -254,7 +284,7 @@ class AppTask extends TasksAppModel {
 /**
  * Return a task for the view method
  * 
- * MAN THIS IS UGLY!!!  NEEDS TO BE REMOVED
+ * MAN THIS IS UGLY!!!  NEEDS TO BE REMOVED (note roameroo uses it, maybe bucket listing)
  * @return array
  */
 	public function view($id = null, $params = null) {
