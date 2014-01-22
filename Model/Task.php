@@ -7,7 +7,10 @@ App::uses('TasksAppModel', 'Tasks.Model');
  * name ChildTask it will do that saving in that model and not here.  This will
  * ease validation across the two types of tasks there are.  Lists and Items.
  */
-
+/**
+ * Class AppTask
+ * @property Task Task
+ */
 class AppTask extends TasksAppModel {
 
 	public $name = 'Task';
@@ -351,6 +354,10 @@ class AppTask extends TasksAppModel {
 	    $name = $assignee['Assignee']['full_name'] . ' : ' . $itemData['Task']['name']; 
 	    $return['TransactionItem']['name'] = $name;
 	    return $return;
+	}
+
+	public function isMyTask($userId,$taskId){
+		return $this->find('count',array('conditions'=>array('id'=>$taskId,'creator_id'=>$userId))) > 0;
 	}
 	
 }
