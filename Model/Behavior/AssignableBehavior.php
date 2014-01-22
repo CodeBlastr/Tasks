@@ -117,7 +117,7 @@ class AssignableBehavior extends ModelBehavior {
 			if ($Model->__sendMail($recipient, $subject, $message)) {
 				return true;
 			} else {
-				break;
+				exit;
 				throw new Exception(__('Assignee could not be notified.'));
 			}
 		}
