@@ -17,12 +17,12 @@ class AppTaskItemsController extends TasksAppController {
 	public function edit($id = null) {
 		if ($this->request->is('post')) {
 			if ($this->Task->save($this->request->data)) {
-				$this->Session->setFlash(__('The Task has been saved'));
+				$this->Session->setFlash(__('Saved'));
 				// redirect to the parent
 				$id = !empty($this->request->data['Task']['parent_id']) ? $this->request->data['Task']['parent_id'] : $this->Task->field('parent_id', array('Task.id' => $this->Task->id));
 				$this->redirect(array('controller' => 'tasks', 'action' => 'view', $id));
 			} else {
-				$this->Session->setFlash(__('The Task could not be saved. Please, try again.'));
+				$this->Session->setFlash(__('Could not be saved. Please, try again.'));
 			}
 		}
 	}

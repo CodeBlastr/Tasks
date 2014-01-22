@@ -204,16 +204,16 @@ class AppTasksController extends TasksAppController {
 						$message = $this->request->data['Task']['name'];
 						$message .= '<p>You can view and comment on this this task here: <a href="'.$_SERVER['HTTP_REFERER'].'">'.$_SERVER['HTTP_REFERER'].'</a></p>';
 						$this->__sendMail($recipient['Assignee']['email'], 'Task Assigned', $message, $template = 'default');
-						$this->Session->setFlash(__('The Task has been saved', true));
+						$this->Session->setFlash(__('Saved'));
 					}
 				} else {
-					$this->Session->setFlash(__('The Task List has been saved', true));
+					$this->Session->setFlash(__('Saved'));
 				}
 				// go to parent if this was a sub item added
 				$id = !empty($this->request->data['Task']['parent_id']) ? $this->request->data['Task']['parent_id'] : $this->Task->id;
 				$this->redirect(array('action' => 'view', $id));
 			} else {
-				$this->Session->setFlash(__('The Task could not be saved. Please, try again.'));
+				$this->Session->setFlash(__('Could not be saved. Please, try again.'));
 			}
 		}
 		if (!empty($model) && !empty($foreignKey) && !empty($id)) {
@@ -242,12 +242,12 @@ class AppTasksController extends TasksAppController {
 	public function edit($id = null) {
 		if (!empty($this->request->data)) {
 			if ($this->Task->add($this->request->data)) {
-				$this->Session->setFlash(__('The Task has been saved'));
+				$this->Session->setFlash(__('Saved'));
 				// go to parent if this is a child
 				$id = !empty($this->request->data['Task']['parent_id']) ? $this->request->data['Task']['parent_id'] : $this->Task->id;
 				$this->redirect(array('action' => 'view', $id));
 			} else {
-				$this->Session->setFlash(__('The Task could not be saved. Please, try again.'));
+				$this->Session->setFlash(__('Could not be saved. Please, try again.'));
 			}
 		}
 		if (empty($this->request->data)) {
@@ -392,7 +392,7 @@ class AppTasksController extends TasksAppController {
 			if($this->Task->add($this->request->data)) {
 				$this->set(compact('taskOrders'));
 			} else {
-				$this->Session->setFlash('There was an error updating Task.');
+				$this->Session->setFlash('There was an error updating, please try again.');
 			}
 		}
 	}
@@ -430,14 +430,14 @@ class AppTasksController extends TasksAppController {
 					$this->__sendMail($recepients, $subject, $message, $template = 'default');
 					# send the message via email
 				}
-				$this->Session->setFlash('Task Completed');
+				$this->Session->setFlash('Completed');
 				$this->redirect($this->referer());
 			} catch (Exception $e) {
 				$this->Session->setFlash($e->getMessage());
 				$this->redirect($this->referer());
 			}
 		} else {
-			$this->Session->setFlash('Invalid task.');
+			$this->Session->setFlash('Invalid');
 			$this->redirect($this->referer());
 		}
 	}
@@ -451,14 +451,14 @@ class AppTasksController extends TasksAppController {
 		if(!empty($id)) {
 			$data['Task']['id'] = $id;
 			if($this->Task->incomplete($data)) {
-				$this->Session->setFlash('Task Incomplete');
+				$this->Session->setFlash('Incompleted');
 				$this->redirect($this->referer());
 			} else {
-				$this->Session->setFlash('There was an error updating Task.');
+				$this->Session->setFlash('There was an error updating, please try again.');
 				$this->redirect($this->referer());
 			}
 		} else {
-			$this->Session->setFlash('Invalid task.');
+			$this->Session->setFlash('Invalid');
 			$this->redirect($this->referer(), 'error');
 		}			
 	}
