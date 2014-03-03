@@ -54,16 +54,16 @@ class AppTask extends TasksAppModel {
 			),
 		);
 
-	// public $hasOne = array(
-		// 'Gallery' => array(
-			// 'className' => 'Galleries.Gallery',
-			// 'foreignKey' => 'foreign_key',
-			// 'dependent' => false,
-			// 'conditions' => array('Gallery.model' => 'Task'),
-			// 'fields' => '',
-			// 'order' => ''
-			// ),
-		// );
+	 public $hasOne = array(
+		 'Gallery' => array(
+			 'className' => 'Galleries.Gallery',
+			 'foreignKey' => 'foreign_key',
+			 'dependent' => false,
+			 'conditions' => array('Gallery.model' => 'Task'),
+			 'fields' => '',
+			 'order' => ''
+			 ),
+		 );
 
 	public $hasMany = array(
 		'ChildTask' => array(
