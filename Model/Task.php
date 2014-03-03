@@ -2,7 +2,7 @@
 App::uses('TasksAppModel', 'Tasks.Model');
 
 /**
- * @todo We need to make a real ChildTask model, that uses the same table. 
+ * @todo We need to make a real ChildTask model, that uses the same table.
  * Then when you are saving something that has a parent_id or is using the model
  * name ChildTask it will do that saving in that model and not here.  This will
  * ease validation across the two types of tasks there are.  Lists and Items.
@@ -23,12 +23,12 @@ class AppTask extends TasksAppModel {
 		// 'due_date' => array(
 			// 'dueDate' => array(
 				// 'rule' => array('_dueDate'),
-				// 'allowEmpty' => true, 
+				// 'allowEmpty' => true,
 				// 'message' => 'Please choose a date.',
 				// )
 			// )
 	);
-	
+
 	//The Associations below have been created with all possible keys, those that are not needed can be removed
 	public $belongsTo = array(
 		'ParentTask' => array(
@@ -53,7 +53,7 @@ class AppTask extends TasksAppModel {
 			'order' => ''
 			),
 		);
-	
+
 	// public $hasOne = array(
 		// 'Gallery' => array(
 			// 'className' => 'Galleries.Gallery',
@@ -63,8 +63,8 @@ class AppTask extends TasksAppModel {
 			// 'fields' => '',
 			// 'order' => ''
 			// ),
-		// );	
-		
+		// );
+
 	public $hasMany = array(
 		'ChildTask' => array(
 			'className' => 'Tasks.Task',
@@ -122,7 +122,7 @@ class AppTask extends TasksAppModel {
 
 /**
  * Validate due date
- * 
+ *
  * If there is a parent id, then there should be a due date
  * @return bool
  */
@@ -137,11 +137,11 @@ class AppTask extends TasksAppModel {
 
 /**
  * After Find callback
- * 
+ *
  */
 	public function afterFind($results, $primary = false) {
 		parent::afterFind($results, $primary);
-	    return $this->triggerOriginCallback('origin_afterFind', $results, $primary); 
+	    return $this->triggerOriginCallback('origin_afterFind', $results, $primary);
 	}
 
 /**
@@ -163,7 +163,7 @@ class AppTask extends TasksAppModel {
 				$allAssociations = array_merge($allAssociations, $this->$association);
 			}
 			foreach ($params['contain'] as $key => $model) {
-				$model = is_string($key) ? $key : $model; 
+				$model = is_string($key) ? $key : $model;
 				if (empty($allAssociations[$model])) {
 					$this->bindModel(array('belongsTo' => array($model => array('foreignKey' => 'foreign_key'))));
 				}
@@ -188,30 +188,30 @@ class AppTask extends TasksAppModel {
 	}
 
 /**
- * galleryData saves the gallery if there is GalleryImage data present 
+ * galleryData saves the gallery if there is GalleryImage data present
  *
- * return bool
+ * @return bool
  */
 	public function galleryData($data) {
 		$data['Gallery']['model'] = $this->name;
 		$data['Gallery']['foreign_key'] = $this->id;
 
-		// check if GalleryImage data is in data 
+		// check if GalleryImage data is in data
 		if (isset($data['GalleryImage'])) {
 			if ($data['GalleryImage']['filename']['error'] == 0 && $this->Gallery->GalleryImage->add($data, 'filename')) {
 				return true;
 			} else {
 				return false;
 			}
-		} 
+		}
 	}
 
 /**
  * Set a task as complete
  *
- * return bool
+ * @return bool
  */
-	public function complete($data) {		
+	public function complete($data) {
 		if ($this->saveAll($this->_isParentComplete($data, 'complete'))) {
 			return true;
 		} else {
@@ -229,22 +229,22 @@ class AppTask extends TasksAppModel {
 			$task = $this->find('first', array(
 				'conditions' => array(
 					'Task.id' => $data['Task']['id'],
-					), 
+					),
 				'contain' => 'ParentTask',
 				));
 			if (!empty($task['ParentTask']['id'])) {
 				$incompleteChildren = $this->find('count', array(
 					'conditions' => array(
-						'Task.parent_id' => $task['ParentTask']['id'], 
+						'Task.parent_id' => $task['ParentTask']['id'],
 						'Task.is_completed' => 0,
-						'Task.id !=' => $task['Task']['id'], 
+						'Task.id !=' => $task['Task']['id'],
 						),
 					));
 				// if all children are complete mark parent as complete
 				if (!empty($incompleteChildren)) {
 					$task['ParentTask']['is_completed'] = 0;
 					$task['ParentTask']['completed_date'] = null;
-				} else if ($status == 'complete') {
+				} elseif ($status === 'complete') {
 					$task['ParentTask']['is_completed'] = 1;
 					$task['ParentTask']['completed_date'] = date('Y-m-d h:i:s');
 				} else {
@@ -280,13 +280,13 @@ class AppTask extends TasksAppModel {
 	public function cleanData($data) {
 		if (empty($data['Task']['name']) && !empty($data['Task']['description'])) {
 			$data['Task']['name'] = $data['Task']['description'];
-		}	
+		}
 		return $data;
 	}
 
 /**
  * Return a task for the view method
- * 
+ *
  * MAN THIS IS UGLY!!!  NEEDS TO BE REMOVED (note roameroo uses it, maybe bucket listing)
  * @return array
  */
@@ -307,9 +307,9 @@ class AppTask extends TasksAppModel {
 			$model = $task['Task']['model'];
 			$init = !empty($plugin) ? $plugin . '.' . $model : $model;
 			$foreignKey = $task['Task']['foreign_key'];
-			
+
 			$result = ClassRegistry::init($init)->find('first', array('conditions' => array($model.'.id' => $foreignKey)));
-			
+
 			$task['Associated'] = $result;
 		}
 		// attach associated data for the ChildTask's as well
@@ -320,9 +320,9 @@ class AppTask extends TasksAppModel {
 					$model = $task['Task']['model'];
 					$init = !empty($plugin) ? $plugin . '.' . $model : $model;
 					$foreignKey = $childTask['foreign_key'];
-					
+
 					$result = ClassRegistry::init($init)->find('first', array('conditions' => array($model.'.id' => $foreignKey)));
-					
+
 					$childTask['Associated'] = $result;
 				}
 			}
@@ -337,10 +337,11 @@ class AppTask extends TasksAppModel {
  * @return array The necessary fields to add a Transaction Item
  */
 	public function mapTransactionItem($key) {
+		$return = array();
 	    $itemData = $this->find('first', array('conditions' => array('id' => $key)));
 	    $fieldsToCopyDirectly = array();
-	    foreach($itemData['Task'] as $k => $v) {
-    		if(in_array($k, $fieldsToCopyDirectly)) {
+	    foreach ($itemData['Task'] as $k => $v) {
+    		if (in_array($k, $fieldsToCopyDirectly)) {
     		    $return['TransactionItem'][$k] = $v;
     		}
 	    }
@@ -351,7 +352,7 @@ class AppTask extends TasksAppModel {
                 ),
             'fields' => array('full_name')
                 ));
-	    $name = $assignee['Assignee']['full_name'] . ' : ' . $itemData['Task']['name']; 
+	    $name = $assignee['Assignee']['full_name'] . ' : ' . $itemData['Task']['name'];
 	    $return['TransactionItem']['name'] = $name;
 	    return $return;
 	}
@@ -359,7 +360,7 @@ class AppTask extends TasksAppModel {
 	public function isMyTask($userId,$taskId){
 		return $this->find('count',array('conditions'=>array('id'=>$taskId,'creator_id'=>$userId))) > 0;
 	}
-	
+
 }
 
 if (!isset($refuseInit)) {
